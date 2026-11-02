@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Luck Table</title>
+<title>Luck Table · Fantasy Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="css/site.css" rel="stylesheet">
 <style>
   /* The board's tokens, unchanged — this is the same pinboard, showing a
      different thing. Lucky is green and unlucky is red, the same pair as a
@@ -78,11 +79,6 @@
   }
   .switch-user:hover{color:var(--loss);}
   .switch-user:focus-visible{outline:2px solid var(--loss);outline-offset:2px;}
-  .back{
-    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
-    color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;
-  }
-  .back:hover{color:var(--lucky);}
 
   /* ---------- the league picker ---------- */
   .picker{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 18px;}
@@ -372,10 +368,19 @@
 </head>
 <body>
 
+<header class="site">
+  <nav class="site-in" aria-label="Fantasy Tracker">
+    <a class="site-name" href="index.html" data-nav>Fantasy Tracker</a>
+    <span class="site-links">
+      <a href="index.html" data-nav>Draft board</a>
+      <a href="luck.html" data-nav aria-current="page">Luck table</a>
+    </span>
+  </nav>
+</header>
+
 <!-- One field, same as the board: the leagues, the scores and every week of
      them all follow from a username. -->
 <section class="start" id="start" hidden>
-  <p class="eyebrow">Fantasy drafter</p>
   <h1>Luck <em>table</em></h1>
   <p class="sub">Type your Sleeper username. Every score in every one of your
     leagues this season comes from there, and so does the schedule you were
@@ -403,13 +408,12 @@
 <div class="wrap" id="app" hidden>
 
   <header class="mast">
-    <p class="eyebrow">Fantasy drafter · <span id="season"></span> season</p>
+    <p class="eyebrow"><span id="season"></span> season</p>
     <h1>Luck <em>table</em></h1>
     <p class="sub">What the schedule did to the standings. Click a team for the
       week by week.</p>
     <p class="whoami">Showing <b id="who"></b>
-      <button type="button" class="switch-user" id="switch-user">not you?</button>
-      <a class="back" href="index.html">draft board →</a></p>
+      <button type="button" class="switch-user" id="switch-user">not you?</button></p>
   </header>
 
   <div class="picker">
@@ -449,6 +453,7 @@
   </div>
 </div>
 
+<script type="module" src="js/nav.js"></script>
 <script type="module" src="js/luck-app.js"></script>
 </body>
 </html>

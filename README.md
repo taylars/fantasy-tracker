@@ -1,4 +1,8 @@
-# fantasy-drafter
+# Fantasy Tracker
+
+Two pages for a Sleeper league, both running entirely in your browser, joined
+by one header. The repository is still called `fantasy-drafter`, which is why
+the published address is `…/fantasy-drafter/`.
 
 A draft board that runs entirely in your browser. Type a Sleeper username and
 it prices every available player against the roster you hold, the picks you
@@ -34,6 +38,7 @@ the same-origin policy, and a `file://` page has no origin to share. Opening
 |---|---|
 | `index.html` | the draft board |
 | `luck.html` | the luck table: what the schedule did to the standings |
+| `css/site.css` · `js/nav.js` | the header both pages share, and its links |
 | `js/sleeper.js` | read-only Sleeper API client |
 | `js/pool.js` | Sleeper's shapes turned into priced players |
 | `js/value.js` | the value formula: lineup coverage, baselines, plan search |

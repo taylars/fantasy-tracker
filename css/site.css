@@ -1,0 +1,42 @@
+/* The header both pages share: the site's name, and the two places it goes.
+ *
+ * Its own file, where every other style lives inline in its page, because
+ * this is the one piece that must look identical on both — two inline copies
+ * of a header are two headers the moment one of them is touched. It leans on
+ * the tokens each page already defines (--ink, --board, --tape, the fonts),
+ * so it has none of its own.
+ */
+
+.site{
+  background:var(--ink);
+  color:var(--board);
+}
+.site-in{
+  max-width:860px;margin:0 auto;padding:0 16px;
+  display:flex;align-items:stretch;justify-content:space-between;gap:12px;
+  min-height:44px;
+}
+.site-name{
+  display:flex;align-items:center;
+  font-family:var(--display);font-weight:700;font-size:19px;
+  letter-spacing:.04em;text-transform:uppercase;
+  color:var(--board);text-decoration:none;white-space:nowrap;
+}
+.site-name:focus-visible,.site-links a:focus-visible{outline:2px solid var(--tape);outline-offset:-2px;}
+.site-links{display:flex;align-items:stretch;gap:4px;}
+.site-links a{
+  display:flex;align-items:center;padding:0 10px;
+  font-family:var(--mono);font-size:11px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;
+  color:var(--board);text-decoration:none;opacity:.72;
+  border-bottom:3px solid transparent;border-top:3px solid transparent;
+}
+.site-links a:hover{opacity:1;}
+/* Where you are: the board's tape, under the link, so the bar says which of
+   the two pages this is without either page having to. */
+.site-links a[aria-current="page"]{opacity:1;border-bottom-color:var(--tape);}
+
+@media (max-width:420px){
+  .site-name{font-size:17px;}
+  .site-links a{padding:0 7px;font-size:10.5px;letter-spacing:.08em;}
+}

@@ -3,10 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Draft Board</title>
+<title>Draft Board · Fantasy Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="css/site.css" rel="stylesheet">
 <style>
   :root{
     --board:#D9DDD6;
@@ -518,20 +519,22 @@
   }
   .switch-user:hover{color:var(--qb);}
   .switch-user:focus-visible{outline:2px solid var(--qb);outline-offset:2px;}
-  /* The other page the username opens: what the schedule has done to the
-     standings in the leagues the picker above is already listing. */
-  .whoami-link{
-    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
-    color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;
-  }
-  .whoami-link:hover{color:var(--te);}
 </style>
 </head>
 <body>
 
+<header class="site">
+  <nav class="site-in" aria-label="Fantasy Tracker">
+    <a class="site-name" href="index.html" data-nav>Fantasy Tracker</a>
+    <span class="site-links">
+      <a href="index.html" data-nav aria-current="page">Draft board</a>
+      <a href="luck.html" data-nav>Luck table</a>
+    </span>
+  </nav>
+</header>
+
 <!-- Everything the board knows comes from this one field. -->
 <section class="start" id="start" hidden>
-  <p class="eyebrow">Fantasy drafter</p>
   <h1>Draft <em>board</em></h1>
   <p class="sub">Type your Sleeper username. Your leagues, your draft, your seat in it
     and every pick made so far come from there.</p>
@@ -563,8 +566,7 @@
     <p class="sub">Everyone already drafted is struck out. Tap a name to open him
       on Sleeper, or his star to mark him a favorite.</p>
     <p class="whoami">Showing <b id="who"></b>
-      <button type="button" class="switch-user" id="switch-user">not you?</button>
-      <a class="whoami-link" href="luck.html">luck table &rarr;</a></p>
+      <button type="button" class="switch-user" id="switch-user">not you?</button></p>
   </header>
 
   <div class="picker" id="picker" hidden>
@@ -614,6 +616,7 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
+<script type="module" src="js/nav.js"></script>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>

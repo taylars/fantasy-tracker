@@ -417,7 +417,7 @@ function renderMeta() {
     title(DRAFT && DRAFT.type),
     DRAFT && DRAFT.rounds ? DRAFT.rounds + " Rounds" : null,
   ].filter(Boolean).join(" · ");
-  document.title = "Draft Board — " + LEAGUE.name;
+  document.title = "Draft Board — " + LEAGUE.name + " · Fantasy Tracker";
 
   $("adp-legend").textContent = "ADP = " +
     [teams ? teams + "-team" : null, format,
