@@ -436,6 +436,14 @@ Two things this depends on, both easy to break later:
 - **`.nojekyll` must stay.** Without it Pages runs Jekyll, which silently drops
   files and directories beginning with `_`.
 
+- **Script and stylesheet URLs are stamped at deploy.** Pages caches every
+  file for ten minutes, each on its own clock, so straight after a deploy a
+  browser could pair the new `luck.html` with the previous `luck-app.js` — new
+  layout, old code. The workflow runs `scripts/stamp.mjs` on the checkout it
+  uploads, tagging every reference with `?v=<commit>`, so a page only ever
+  loads its own deploy's files. The repository is never stamped, and
+  `test/stamp.test.js` fails if a new import slips past the stamper.
+
 Pages cannot set HTTP headers, which costs nothing here: the board never serves
 a cross-origin request, it only makes them, and Sleeper sends the permissive
 headers itself.

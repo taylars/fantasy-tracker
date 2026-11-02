@@ -4,6 +4,11 @@
 # what gets uploaded is the repository as it stands. That is deliberate — a
 # bundler here would mean the thing that ships is not the thing you ran locally.
 #
+# The one exception is a query string. Pages caches each file for ten minutes
+# on its own clock, so a browser can hold one deploy's page with the previous
+# deploy's script; scripts/stamp.mjs tags every script and stylesheet URL with
+# the commit so a page only ever loads its own deploy's files.
+#
 # Turn this on once, under Settings → Pages → Source → GitHub Actions.
 name: Deploy to Pages
 
@@ -47,6 +52,11 @@ jobs:
       # fails here rather than in a draft.
       - name: Test the recommendations
         run: npm test
+
+      # After the tests, on the checkout being uploaded: the repository itself
+      # is never stamped (test/stamp.test.js holds it to that).
+      - name: Stamp asset URLs with this commit
+        run: node scripts/stamp.mjs "${GITHUB_SHA::12}"
 
       - uses: actions/configure-pages@v5
 
