@@ -225,34 +225,48 @@
   }
   .detail-sum b{color:var(--ink);font-weight:600;}
   .wks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;}
+  /* A grid rather than a flex row, so the weeks read as columns. In a flex
+     row the opponent's score sat wherever the name's leftover space ended,
+     and that moved with whatever came after it: a wider "vs week" figure or a
+     flag pushed it left, so no two weeks lined up. Every track here has a
+     fixed width except the name, and the flag keeps its column reserved on
+     the weeks it is absent. */
   .wk{
-    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    display:grid;align-items:center;column-gap:8px;
+    grid-template-columns:38px 17px 50px 16px minmax(0,1fr) 50px 92px 62px;
+    grid-template-areas:"no res me vs opp them delta flag";
     font-family:var(--mono);font-size:11.5px;
+    font-variant-numeric:tabular-nums;
     border-top:1px solid var(--board-dark);padding:4px 0 3px;
   }
   .wk:first-child{border-top:0;}
   .wk-no{
+    grid-area:no;
     letter-spacing:.1em;text-transform:uppercase;font-size:10px;
-    color:var(--ink-soft);width:38px;flex-shrink:0;
+    color:var(--ink-soft);
   }
   .wk-res{
+    grid-area:res;
     font-family:var(--display);font-weight:700;font-size:12px;
-    color:#fff;width:17px;text-align:center;flex-shrink:0;border-radius:2px;
+    color:#fff;text-align:center;border-radius:2px;
   }
   .wk-res.W{background:var(--win);}
   .wk-res.L{background:var(--loss);}
   .wk-res.T{background:var(--ink-soft);}
-  .wk-score{font-weight:600;min-width:46px;}
-  .wk-dash,.wk-opp{color:var(--ink-soft);}
+  .wk-score{font-weight:600;text-align:right;}
+  .wk-me{grid-area:me;}
+  .wk-them{grid-area:them;}
+  .wk-dash{grid-area:vs;color:var(--ink-soft);}
   .wk-opp{
-    flex:1 1 120px;min-width:0;overflow:hidden;
-    text-overflow:ellipsis;white-space:nowrap;
+    grid-area:opp;color:var(--ink-soft);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
-  .wk-vs{font-size:10.5px;color:var(--ink-soft);cursor:help;flex-shrink:0;}
+  .wk-vs{grid-area:delta;font-size:10.5px;color:var(--ink-soft);cursor:help;text-align:right;}
   .flag{
+    grid-area:flag;justify-self:end;
     font-family:var(--display);font-weight:700;font-size:10.5px;
     letter-spacing:.08em;text-transform:uppercase;
-    padding:1px 5px;border-radius:2px;color:#fff;flex-shrink:0;
+    padding:1px 5px;border-radius:2px;color:#fff;
   }
   .flag.stolen{background:var(--unlucky);}
   .flag.gifted{background:var(--lucky);}
@@ -285,7 +299,13 @@
     .c-exp{width:32px;}
     .c-exp-rec{display:none;}
     .c-swing{width:38px;}
-    .wk-opp{flex-basis:100%;order:9;}
+    /* Too narrow for the name in line, so it drops to a second row under
+       the scores; the numbers keep their columns either way. */
+    .wk{
+      grid-template-columns:34px 17px 46px 16px 46px minmax(0,1fr);
+      grid-template-areas:"no res me vs them delta" ". . opp opp opp flag";
+      row-gap:2px;
+    }
     .wk-vs{font-size:10px;}
   }
 

@@ -89,10 +89,10 @@ function weekHtml(w) {
   return '<li class="wk">' +
     `<span class="wk-no">wk ${w.week}</span>` +
     `<span class="wk-res ${result}">${result}</span>` +
-    `<span class="wk-score">${w.points.toFixed(1)}</span>` +
+    `<span class="wk-score wk-me">${w.points.toFixed(1)}</span>` +
     `<span class="wk-dash">vs</span>` +
     `<span class="wk-opp">${esc(w.opponent)}</span>` +
-    `<span class="wk-score">${w.oppPoints.toFixed(1)}</span>` +
+    `<span class="wk-score wk-them">${w.oppPoints.toFixed(1)}</span>` +
     `<span class="wk-vs" title="their score against the league's ${w.leagueAvg.toFixed(1)} that week">` +
       `${signed(vs, 1)} vs week</span>` +
     mark + "</li>";
