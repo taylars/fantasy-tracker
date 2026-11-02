@@ -63,6 +63,11 @@ export function validateGrades(document, expectedSeason = document?.season) {
       offense.set(grade.team, grade.offense);
     }
     if (rankTeams) {
+      // A documented free agent has no cutoff-date offense to rank.
+      if (grade.team === null && grade.offense === 0 && grade.team_source && cutoff) {
+        checkSource(grade.team_source, cutoff);
+        continue;
+      }
       const rank = rankTeams.indexOf(grade.team);
       const normalized = rank < 3 ? 2 : rank < 10 ? 1 : rank < 22 ? 0 : rank < 29 ? -1 : -2;
       if (rank < 0 || grade.offense !== normalized) throw new Error(`${id}: offense normalization mismatch`);
@@ -96,7 +101,14 @@ export function validateGradeCohort(document, draft) {
   if (Object.keys(document.grades).length !== wanted.length) throw new Error("Grade cohort count mismatch");
   for (const player of wanted) {
     const grade = document.grades[player.player_id];
-    if (!grade || grade.position !== player.position || grade.team !== player.team)
+    if (!grade || grade.position !== player.position)
       throw new Error(`Grade cohort mismatch: ${player.player_id}`);
+    if (grade.team !== player.team) {
+      // Preserve the fetched archive while recording a sourced preseason correction.
+      if (!document.cutoff || !Object.hasOwn(grade, "archived_team") ||
+          grade.archived_team !== player.team || !grade.team_source)
+        throw new Error(`Grade cohort mismatch: ${player.player_id}`);
+      checkSource(grade.team_source, document.cutoff);
+    }
   }
 }

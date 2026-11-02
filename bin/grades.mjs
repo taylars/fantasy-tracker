@@ -49,7 +49,7 @@ if (command === "check") {
   if (!Number.isSafeInteger(top) || top < 1) throw new Error("--top must be a positive integer");
   const players = draft.players.filter(p => ["QB", "RB", "WR", "TE"].includes(p.position))
     .map(p => ({ player_id: p.player_id, name: p.name, position: p.position, team: p.team,
-      adp: Math.min(...Object.values(p.adp).filter(Number.isFinite)) }))
+      adp: Math.min(...[p.adp.std, p.adp.half_ppr, p.adp.ppr].filter(Number.isFinite)) }))
     .sort((a, b) => a.adp - b.adp).slice(0, top)
     .filter(p => options.regrade || !document.grades[p.player_id]);
   console.log(JSON.stringify({ season: document.season, players }, null, 2));
