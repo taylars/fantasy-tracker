@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Luck Table</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* The board's tokens, unchanged — this is the same pinboard, showing a
+     different thing. The two luck colours are the only addition: the board's
+     red and green are a diverging pair deutan vision cannot separate, so the
+     scale borrows the WR blue and TE amber instead. */
+  :root{
+    --board:#D9DDD6;
+    --board-dark:#C6CBC2;
+    --sticker:#FFFFFF;
+    --ink:#16191A;
+    --ink-soft:#5C625E;
+    --tape:#F2C230;
+    --lucky:#B4690E;
+    --unlucky:#2563A8;
+    --win:#157F52;
+    --loss:#C2255C;
+    --display:"Barlow Condensed",Impact,sans-serif;
+    --body:"Archivo",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--board);
+    background-image:
+      linear-gradient(rgba(0,0,0,.035) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(0,0,0,.035) 1px,transparent 1px);
+    background-size:34px 34px;
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:15px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:860px;margin:0 auto;padding:22px 16px 80px;}
+
+  /* ---------- masthead ---------- */
+  .mast{border-bottom:3px solid var(--ink);padding-bottom:14px;margin-bottom:18px;}
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-soft);margin:0 0 6px;
+  }
+  h1{
+    font-family:var(--display);font-weight:700;
+    font-size:clamp(38px,9vw,64px);line-height:.92;
+    letter-spacing:-.01em;text-transform:uppercase;margin:0;
+  }
+  h1 em{
+    font-style:normal;background:var(--tape);padding:0 .18em;
+    box-decoration-break:clone;-webkit-box-decoration-break:clone;
+  }
+  .sub{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin:10px 0 0;}
+  .whoami{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-soft);margin:8px 0 0;
+  }
+  .whoami b{
+    color:var(--ink);font-weight:600;letter-spacing:.04em;
+    text-transform:none;font-family:var(--body);font-size:13px;
+  }
+  .switch-user{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    background:none;border:0;padding:2px 0;margin:0;cursor:pointer;
+    color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;
+  }
+  .switch-user:hover{color:var(--loss);}
+  .switch-user:focus-visible{outline:2px solid var(--loss);outline-offset:2px;}
+  .back{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;
+  }
+  .back:hover{color:var(--lucky);}
+
+  /* ---------- the league picker ---------- */
+  .picker{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 18px;}
+  .field{display:flex;flex-direction:column;gap:6px;flex:1 1 250px;min-width:0;}
+  .field-lbl{
+    font-family:var(--mono);font-size:10.5px;font-weight:600;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);
+  }
+  .field select{
+    appearance:none;-webkit-appearance:none;
+    font-family:var(--display);font-weight:600;
+    font-size:18px;line-height:1.15;letter-spacing:.02em;
+    text-transform:uppercase;color:var(--ink);
+    background-color:var(--sticker);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' fill='none' stroke='%2316191A' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 11px center;background-size:11px 7px;
+    border:2px solid var(--ink);border-radius:2px;box-shadow:3px 3px 0 var(--ink);
+    padding:8px 34px 7px 10px;width:100%;cursor:pointer;text-overflow:ellipsis;
+  }
+  .field select:hover{background-color:#FFFBEC;}
+  .field select:focus-visible{outline:3px solid var(--loss);outline-offset:2px;}
+  .field select:disabled{
+    color:var(--ink-soft);background-color:transparent;
+    border-color:var(--board-dark);box-shadow:none;cursor:default;background-image:none;
+  }
+  .field option{font-family:var(--body);font-size:14px;text-transform:none;}
+
+  .standing{
+    font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);
+    letter-spacing:.04em;margin:0 0 14px;min-height:1.4em;
+  }
+  .standing b{color:var(--ink);font-weight:600;}
+  .status{
+    font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);
+    padding:20px 0;margin:0;
+  }
+  .status-note{
+    font-family:var(--mono);font-size:11px;color:var(--ink-soft);
+    margin:0 0 10px;min-height:1.2em;
+  }
+
+  /* ---------- the table ---------- */
+  /* One sticker per team, which is why the borders live on the tbody rather
+     than the cells: a row is an object on the board, not a line in a grid. */
+  /* Fixed layout, because the team column has to be the one that gives way.
+     Left to size itself, a cell holding "Total Gridiron Conquest" claims its
+     min-content width and pushes the swing column off a phone screen — the
+     ellipsis on the name never gets a chance to fire. Fixed hands every other
+     column the width named below and the name whatever is left. */
+  .tbl{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0 4px;}
+  .tbl thead th{
+    font-family:var(--mono);font-size:10px;font-weight:600;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);
+    text-align:left;padding:0 8px 6px;white-space:nowrap;
+  }
+  .tbl thead th[title]{cursor:help;}
+  tbody.team{
+    background:var(--sticker);
+    border:2px solid var(--ink);
+  }
+  .team-row{cursor:pointer;}
+  .team-row>td{
+    border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);
+    background:var(--sticker);padding:7px 8px;vertical-align:middle;
+  }
+  .team-row>td:first-child{border-left:2px solid var(--ink);}
+  .team-row>td:last-child{border-right:2px solid var(--ink);}
+  .team-row:hover>td{background:#FFFBEC;}
+  .team-row:focus-visible{outline:3px solid var(--loss);outline-offset:2px;}
+
+  .c-place{
+    font-family:var(--display);font-weight:700;font-size:21px;
+    width:34px;text-align:center;color:var(--ink);
+  }
+  .c-team{min-width:0;}
+  .tm-name{
+    display:block;font-weight:600;font-size:14px;line-height:1.2;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .tm-mgr{
+    display:block;font-family:var(--mono);font-size:10px;
+    letter-spacing:.05em;color:var(--ink-soft);
+  }
+  .c-rec{font-family:var(--mono);font-size:13px;font-weight:600;width:56px;}
+
+  /* The meter and the number, because the colour is never the only reading. */
+  .c-luck{width:160px;white-space:nowrap;}
+  .meter{
+    display:inline-block;position:relative;vertical-align:middle;
+    width:104px;height:12px;
+    background:var(--board);
+    border:1.5px solid var(--board-dark);border-radius:2px;
+  }
+  .meter-mid{
+    position:absolute;left:50%;top:-2px;bottom:-2px;
+    width:1.5px;margin-left:-.75px;background:var(--ink-soft);
+  }
+  .meter-bar{position:absolute;top:0;bottom:0;}
+  /* Ends rounded away from the midline: the bar grows out of 50, so that is
+     the end that stays square. */
+  .meter-bar.up{
+    left:50%;background:var(--lucky);
+    border-radius:0 2px 2px 0;
+  }
+  .meter-bar.down{
+    right:50%;background:var(--unlucky);
+    border-radius:2px 0 0 2px;
+  }
+  .luck-n{
+    font-family:var(--mono);font-size:13px;font-weight:600;
+    margin-left:9px;display:inline-block;min-width:24px;text-align:right;
+  }
+
+  .c-exp{font-family:var(--mono);font-size:13px;font-weight:600;width:62px;}
+  .c-exp-rec{
+    display:block;font-size:9.5px;font-weight:500;
+    letter-spacing:.04em;color:var(--ink-soft);
+  }
+  .c-swing{
+    font-family:var(--mono);font-size:13px;font-weight:600;
+    width:48px;text-align:right;
+  }
+  /* Up the standings is what the schedule gave you, so it wears the lucky
+     colour — and the sign is on the number, which does the same job. */
+  .c-swing.up{color:var(--lucky);}
+  .c-swing.down{color:var(--unlucky);}
+  .c-swing.flat{color:var(--ink-soft);}
+
+  /* ---------- the week by week ---------- */
+  tr.detail>td{padding:0;border:0;}
+  tbody.team:not(.open) tr.detail{display:none;}
+  .detail-in{
+    background:#FFFBEC;
+    border:2px solid var(--ink);border-top:0;
+    padding:11px 12px 12px;
+  }
+  .detail-sum{
+    font-family:var(--mono);font-size:11.5px;line-height:1.65;
+    color:var(--ink-soft);margin:0 0 10px;
+  }
+  .detail-sum b{color:var(--ink);font-weight:600;}
+  .wks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px;}
+  .wk{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:11.5px;
+    border-top:1px solid var(--board-dark);padding:4px 0 3px;
+  }
+  .wk:first-child{border-top:0;}
+  .wk-no{
+    letter-spacing:.1em;text-transform:uppercase;font-size:10px;
+    color:var(--ink-soft);width:38px;flex-shrink:0;
+  }
+  .wk-res{
+    font-family:var(--display);font-weight:700;font-size:12px;
+    color:#fff;width:17px;text-align:center;flex-shrink:0;border-radius:2px;
+  }
+  .wk-res.W{background:var(--win);}
+  .wk-res.L{background:var(--loss);}
+  .wk-res.T{background:var(--ink-soft);}
+  .wk-score{font-weight:600;min-width:46px;}
+  .wk-dash,.wk-opp{color:var(--ink-soft);}
+  .wk-opp{
+    flex:1 1 120px;min-width:0;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap;
+  }
+  .wk-vs{font-size:10.5px;color:var(--ink-soft);cursor:help;flex-shrink:0;}
+  .flag{
+    font-family:var(--display);font-weight:700;font-size:10.5px;
+    letter-spacing:.08em;text-transform:uppercase;
+    padding:1px 5px;border-radius:2px;color:#fff;flex-shrink:0;
+  }
+  .flag.stolen{background:var(--unlucky);}
+  .flag.gifted{background:var(--lucky);}
+
+  /* ---------- the legend ---------- */
+  .legend{
+    font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--ink-soft);
+    border-top:2px solid var(--ink);padding-top:12px;margin-top:28px;
+  }
+  .legend p{margin:0 0 8px;max-width:72ch;}
+  .legend p:last-child{margin-bottom:0;}
+  .legend b{color:var(--ink);font-weight:600;}
+  .key{display:inline-flex;align-items:center;gap:6px;margin-right:14px;}
+  .key i{width:11px;height:11px;border-radius:2px;display:inline-block;}
+  .key i.lucky{background:var(--lucky);}
+  .key i.unlucky{background:var(--unlucky);}
+
+  @media (max-width:560px){
+    .field{flex:1 1 100%;}
+    /* The record is the one column the table can lose: it is the two numbers
+       everybody already knows, and the place beside it implies them. */
+    /* width:0 as well as display:none — a fixed layout takes its columns from
+       the header row's widths, and a hidden header still had the column
+       holding on to its 56px, which came straight off the team name. */
+    .tbl thead th.c-rec,.team-row>td.c-rec{display:none;width:0;}
+    .c-place{width:28px;font-size:19px;}
+    .c-luck{width:104px;}
+    .meter{width:56px;}
+    .luck-n{margin-left:7px;min-width:21px;}
+    .c-exp{width:32px;}
+    .c-exp-rec{display:none;}
+    .c-swing{width:38px;}
+    .wk-opp{flex-basis:100%;order:9;}
+    .wk-vs{font-size:10px;}
+  }
+
+  /* ---------- the start screen ---------- */
+  .start{max-width:520px;margin:0 auto;padding:64px 16px 80px;}
+  .start h1{margin-bottom:6px;}
+  .start .sub{margin-bottom:26px;max-width:46ch;}
+  .start-form{display:flex;gap:8px;flex-wrap:wrap;}
+  .start-form label{flex:1 1 220px;display:flex;flex-direction:column;gap:5px;min-width:0;}
+  #username{
+    font-family:var(--mono);font-size:16px;
+    background:var(--sticker);color:var(--ink);
+    border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink);
+    border-radius:2px;padding:11px 12px;width:100%;
+  }
+  #username:focus-visible{outline:3px solid var(--loss);outline-offset:2px;}
+  #username:disabled{opacity:.6;}
+  .start-go{
+    font-family:var(--display);font-weight:700;font-size:19px;
+    letter-spacing:.04em;text-transform:uppercase;
+    background:var(--ink);color:#fff;
+    border:2px solid var(--ink);box-shadow:2px 2px 0 var(--tape);
+    border-radius:2px;padding:0 20px;cursor:pointer;align-self:flex-end;height:47px;
+  }
+  .start-go:hover{background:#2C3133;}
+  .start-go:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--tape);}
+  .start-go:focus-visible{outline:3px solid var(--loss);outline-offset:2px;}
+  .start-go[disabled]{opacity:.5;cursor:default;transform:none;}
+  .start-note{
+    font-family:var(--mono);font-size:12px;color:var(--ink-soft);
+    margin:14px 0 0;min-height:1.4em;
+  }
+  .start-error{
+    font-family:var(--mono);font-size:12.5px;line-height:1.6;
+    border:2px solid var(--ink);border-left:8px solid var(--loss);
+    background:var(--sticker);padding:11px 13px;margin:18px 0 0;
+  }
+  .start-error[hidden]{display:none;}
+  .start-foot{
+    font-family:var(--mono);font-size:11px;color:var(--ink-soft);
+    border-top:2px solid var(--ink);padding-top:12px;margin-top:34px;
+    display:flex;flex-wrap:wrap;gap:14px;
+  }
+</style>
+</head>
+<body>
+
+<!-- One field, same as the board: the leagues, the scores and every week of
+     them all follow from a username. -->
+<section class="start" id="start" hidden>
+  <p class="eyebrow">Fantasy drafter</p>
+  <h1>Luck <em>table</em></h1>
+  <p class="sub">Type your Sleeper username. Every score in every one of your
+    leagues this season comes from there, and so does the schedule you were
+    handed.</p>
+
+  <form class="start-form" id="start-form" autocomplete="off">
+    <label>
+      <span class="field-lbl">Sleeper username</span>
+      <input type="text" id="username" name="username" required
+             autocapitalize="none" autocorrect="off" spellcheck="false"
+             placeholder="username">
+    </label>
+    <button type="submit" class="start-go" id="start-go">Go</button>
+  </form>
+
+  <p class="start-note" id="start-note"></p>
+  <p class="start-error" id="start-error" role="alert" hidden></p>
+
+  <div class="start-foot">
+    <span>Reads Sleeper directly — nothing is sent anywhere else</span>
+    <span>Nothing to sign in to; the username is public</span>
+  </div>
+</section>
+
+<div class="wrap" id="app" hidden>
+
+  <header class="mast">
+    <p class="eyebrow">Fantasy drafter · <span id="season"></span> season</p>
+    <h1>Luck <em>table</em></h1>
+    <p class="sub">What the schedule did to the standings. Click a team for the
+      week by week.</p>
+    <p class="whoami">Showing <b id="who"></b>
+      <button type="button" class="switch-user" id="switch-user">not you?</button>
+      <a class="back" href="index.html">draft board →</a></p>
+  </header>
+
+  <div class="picker">
+    <label class="field">
+      <span class="field-lbl">League</span>
+      <select id="league-pick"></select>
+    </label>
+  </div>
+
+  <p class="status-note" id="status-note"></p>
+  <p class="standing" id="standing"></p>
+
+  <main id="table-wrap">
+    <p class="status">Reading the season…</p>
+  </main>
+
+  <div class="legend">
+    <p><b>Luck</b> is 0-100, and 50 is average <em>for this league</em> — luck is
+      zero-sum, so the only fair comparison is the other teams in it. The scale
+      runs two standard deviations each way, so the ends are real extremes.</p>
+    <p>It is the average of two things. <b>Record luck</b> is wins against the
+      all-play record — what you'd have if you played the whole league every
+      week — which catches scoring 140 and losing. <b>Schedule luck</b> is what
+      the opponents you drew scored against what the league scored that week,
+      which catches facing the one manager who went off.</p>
+    <p><b>Exp</b> is the place the all-play record earns, with that record under
+      it. <b>Swing</b> is how many places the schedule has moved you from it.</p>
+    <p>
+      <span class="key"><i class="lucky"></i> the season has gone your way</span>
+      <span class="key"><i class="unlucky"></i> it hasn't</span>
+      <span class="key"><b>robbed</b> = beat most of the league and lost</span>
+      <span class="key"><b>gifted</b> = beat almost none of it and won</span>
+    </p>
+    <p>Finished weeks only — a week in progress is left out until every team in
+      it has a score, and playoff weeks never count.</p>
+  </div>
+</div>
+
+<script type="module" src="js/luck-app.js"></script>
+</body>
+</html>

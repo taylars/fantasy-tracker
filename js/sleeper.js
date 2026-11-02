@@ -164,6 +164,23 @@ export class SleeperClient {
     return (await this.get(`/league/${leagueId}/rosters`)) ?? [];
   }
 
+  /* One week's fixtures and scores → a row per roster, paired by matchup_id.
+   *
+   * Every week of the season answers from the day the league is made: the
+   * fixtures are set, and `points` is 0.0 until the games are played. So an
+   * empty-looking week is a week that hasn't happened, not a failed request —
+   * see playedWeeks in js/luck.js, which is what decides a week is over.
+   *
+   * `points` is the week's final score once it is; mid-Sunday it is whatever
+   * has been scored so far, so a week in progress is worth nothing but a
+   * scoreboard. Cached for five minutes: a finished week never changes again,
+   * and a live one is not what this is for.
+   */
+  async getMatchups(leagueId, week, { ttlMs = 5 * 60 * 1000 } = {}) {
+    return (await this.cached(`matchups:${leagueId}:${week}`, ttlMs,
+      () => this.get(`/league/${leagueId}/matchups/${week}`))) ?? [];
+  }
+
   /* All drafts for a league, newest first (dynasty leagues have several).
    *
    * A minute, which is long enough to make switching between leagues feel

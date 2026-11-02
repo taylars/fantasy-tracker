@@ -4,7 +4,11 @@ A draft board that runs entirely in your browser. Type a Sleeper username and
 it prices every available player against the roster you hold, the picks you
 have left, and what waiting until your next turn would get you instead.
 
-No server, no database, no install. It reads Sleeper directly from the page.
+Then, once the season is running, a [luck table](#the-luck-table) off the same
+username: how much of each team's record is the team, and how much is the
+schedule it was handed.
+
+No server, no database, no install. Both read Sleeper directly from the page.
 
 ## Try it
 
@@ -14,7 +18,9 @@ Open the published board, or run it locally:
 npm start
 ```
 
-Then <http://localhost:8000>. That is a static file server and nothing else —
+Then <http://localhost:8000> for the board, or
+<http://localhost:8000/luck.html> for the luck table. That is a static file
+server and nothing else —
 what runs locally is exactly what GitHub Pages serves, because there is no
 server side to any of it.
 
@@ -26,12 +32,15 @@ the same-origin policy, and a `file://` page has no origin to share. Opening
 
 | | |
 |---|---|
-| `index.html` | the board, and the only page there is |
+| `index.html` | the draft board |
+| `luck.html` | the luck table: what the schedule did to the standings |
 | `js/sleeper.js` | read-only Sleeper API client |
 | `js/pool.js` | Sleeper's shapes turned into priced players |
 | `js/value.js` | the value formula: lineup coverage, baselines, plan search |
 | `js/worker.js` | the formula, off the main thread |
-| `js/app.js` | the page: start screen, pickers, rendering, live polling |
+| `js/app.js` | the board page: start screen, pickers, rendering, live polling |
+| `js/luck.js` | the luck metric: all-play records and schedule luck |
+| `js/luck-app.js` | the luck page: start screen, league picker, the table |
 | `js/cache-idb.js` · `js/cache-fs.js` | the response cache, one per environment |
 | `data/historical/<year>/grades.json` | canonical researched grades, one file per season |
 | `bin/board.mjs` | the board on the command line |
@@ -193,6 +202,43 @@ That id is the one thing about a mock nothing else can tell us, so the browser
 remembers it against the league it was pasted in from and re-fetches it on the
 next visit. A mock that has since been deleted is dropped from the picker rather
 than breaking it.
+
+## The luck table
+
+`luck.html` is the other half of the same idea, after the draft: one username,
+the same leagues, and every score in them. It answers the question a 3-4 record
+does not — whether the record is the team or the schedule.
+
+Two numbers, both built from the weekly scores and nothing else:
+
+- **Record luck** is wins against the *all-play* record: what you'd have if you
+  played the whole league every week rather than the one team you were drawn
+  against. Scoring 140 and losing is the week this catches.
+- **Schedule luck** is what the opponents you drew scored against what the
+  league scored that week. Facing the one manager who went off is the week this
+  catches, and it is the mechanism behind most record luck.
+
+Both are standardised within the league and averaged into a 0-100 score, where
+50 is that league's average and the scale runs two standard deviations each
+way. The scale is *relative to the league on purpose*: luck is zero-sum, so a
+soft schedule only exists against the eleven other schedules it was drawn from.
+It follows that the scores average to 50 and the expected wins add up to the
+wins actually handed out — both worth checking if you change the arithmetic.
+
+The table orders by current place and shows the place the all-play record
+earns beside it, so the gap between the two columns is the whole story. Click a
+team for the week by week, where a week you lost having beaten most of the
+league is marked `robbed` and a week you won having beaten almost none of it is
+marked `gifted`.
+
+**Only finished weeks count, and that is decided by the calendar rather than by
+the scores.** Sleeper serves a row for every week of the season from the day
+the league is created, at 0.0 points, so "every team has a score" looks like a
+finished week — but an hour into Sunday afternoon every roster has somebody on
+the field and every score is above zero. Read that way, the table ran a game
+ahead of the league's own standings. `state.week` is the week being played, so
+the last finished week is the one before it. Playoff weeks never count either:
+only part of the league is in the bracket.
 
 ## ADP and projections
 
@@ -359,6 +405,13 @@ shortlist so a failure says what it got instead. Planted players are built by
 `player()` or by `like()`, which copies a real one and moves a single number —
 that is how "just better than the best man on the board" gets written without
 restating his whole line.
+
+`test/luck.test.js` is the exception to all of this, because the luck metric
+is arithmetic rather than a judgment: it runs on a four-team, two-week league
+small enough that every expected win, schedule-luck total and 0-100 score in
+the file was worked out on paper first. Pinning those numbers down is the
+point. It also holds the one case that actually bit — a week in progress, where
+every score is above zero and none of them are final.
 
 What these should not do is pin the current numbers down. Values move whenever
 the formula is tuned, and a suite that failed on every tuning would be deleted

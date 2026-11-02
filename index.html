@@ -518,6 +518,13 @@
   }
   .switch-user:hover{color:var(--qb);}
   .switch-user:focus-visible{outline:2px solid var(--qb);outline-offset:2px;}
+  /* The other page the username opens: what the schedule has done to the
+     standings in the leagues the picker above is already listing. */
+  .whoami-link{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;
+  }
+  .whoami-link:hover{color:var(--te);}
 </style>
 </head>
 <body>
@@ -556,7 +563,8 @@
     <p class="sub">Everyone already drafted is struck out. Tap a name to open him
       on Sleeper, or his star to mark him a favorite.</p>
     <p class="whoami">Showing <b id="who"></b>
-      <button type="button" class="switch-user" id="switch-user">not you?</button></p>
+      <button type="button" class="switch-user" id="switch-user">not you?</button>
+      <a class="whoami-link" href="luck.html">luck table &rarr;</a></p>
   </header>
 
   <div class="picker" id="picker" hidden>
