@@ -9,9 +9,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   /* The board's tokens, unchanged — this is the same pinboard, showing a
-     different thing. The two luck colours are the only addition: the board's
-     red and green are a diverging pair deutan vision cannot separate, so the
-     scale borrows the WR blue and TE amber instead. */
+     different thing. Lucky is green and unlucky is red, the same pair as a
+     win and a loss, because that is how a season going your way reads.
+     Red against green is the pair deutan vision cannot separate, so the
+     colour never carries the reading alone: the score is printed beside every
+     bar, the bar grows left or right of the 50 line, and swing carries a
+     sign. */
   :root{
     --board:#D9DDD6;
     --board-dark:#C6CBC2;
@@ -19,10 +22,10 @@
     --ink:#16191A;
     --ink-soft:#5C625E;
     --tape:#F2C230;
-    --lucky:#B4690E;
-    --unlucky:#2563A8;
     --win:#157F52;
     --loss:#C2255C;
+    --lucky:var(--win);
+    --unlucky:var(--loss);
     --display:"Barlow Condensed",Impact,sans-serif;
     --body:"Archivo",system-ui,sans-serif;
     --mono:"IBM Plex Mono",ui-monospace,monospace;

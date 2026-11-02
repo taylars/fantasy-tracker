@@ -61,10 +61,10 @@ function readSession() {
  *
  * Diverging rather than a 0-100 fill, because the number is a deviation and the
  * middle is the meaningful value — a fill from zero would draw "average" as
- * half full, which reads as half bad. Blue and amber rather than the board's
- * red and green: a red/green pair is the one thing a diverging scale must not
- * be, since deutan vision cannot separate them. The score is printed next to
- * the bar either way, so the colour is never carrying the reading alone.
+ * half full, which reads as half bad. Green for lucky and red for unlucky, the
+ * same pair as a win and a loss. Deutan vision can't separate those two, so
+ * the colour is never carrying the reading alone: the score is printed next to
+ * the bar, and which side of the 50 line it grows on says the same thing.
  */
 /* The width is the distance from 50, not twice it: the bar is a percentage of
  * the whole track while it only owns half of it. Doubled, a 94 ran to 138% of
