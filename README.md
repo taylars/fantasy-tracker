@@ -213,27 +213,36 @@ than breaking it.
 the same leagues, and every score in them. It answers the question a 3-4 record
 does not — whether the record is the team or the schedule.
 
-Two numbers, both built from the weekly scores and nothing else:
+The score is **record luck**: wins against the *all-play* record, what you'd
+have if you played the whole league every week rather than the one team you
+were drawn against. Scoring 140 and losing counts against you; scoring 80 and
+winning counts for you. It is built from the weekly scores and nothing else.
 
-- **Record luck** is wins against the *all-play* record: what you'd have if you
-  played the whole league every week rather than the one team you were drawn
-  against. Scoring 140 and losing is the week this catches.
-- **Schedule luck** is what the opponents you drew scored against what the
-  league scored that week. Facing the one manager who went off is the week this
-  catches, and it is the mechanism behind most record luck.
+**Schedule luck** — what the opponents you drew scored against what the league
+scored that week — is shown but not scored. It used to be half the score, and
+it counted luck that changed nothing: score 20 above the week and your
+opponent's +10 or −10 is the same win, yet one read as a hard draw and the
+other a soft one. In a league where the two disagreed, a team that drew hot
+opponents but lost only 0.18 wins to them scored −49 on the blend; on record
+luck alone it is −7. Schedule luck stays in the week by week and the summary
+sentence, as the explanation rather than the number.
 
-Both are standardised within the league and averaged into one score from −100
-to +100, where 0 is that league's average and ±100 is two standard deviations.
-The scale is *relative to the league on purpose*: luck is zero-sum, so a soft
-schedule only exists against the eleven other schedules it was drawn from. It
-follows that the scores average to zero and the expected wins add up to the
-wins actually handed out — both worth checking if you change the arithmetic.
+Record luck is standardised within the league onto a score from −100 to +100,
+where 0 is that league's average and ±100 is two standard deviations. The
+scale is *relative to the league on purpose*: luck is zero-sum, so a stolen win
+only exists against the eleven other records it was taken from. It follows
+that the scores average to zero and the expected wins add up to the wins
+actually handed out — both worth checking if you change the arithmetic.
 
 The table orders by current place and shows the place the all-play record
 earns beside it, so the gap between the two columns is the whole story. Click a
-team for the week by week, where a week you lost having beaten most of the
-league is marked `robbed` and a week you won having beaten almost none of it is
-marked `gifted`.
+team for the week by week, where a week you lost having outscored at least
+two-thirds of the league is marked `robbed` and a week you won having outscored
+a third of it or less is marked `gifted` — 8 of 11 and 3 of 11 in a 12-team
+league. Thirds rather than halves on purpose: at half, finishing 6th of 12 and
+losing to the 3rd-best score counted as robbed, which is a good opponent on a
+middling week, not a theft. Each score in the list carries its ± against that
+week's league average, yours and your opponent's both.
 
 **Only finished weeks count, and that is decided by the calendar rather than by
 the scores.** Sleeper serves a row for every week of the season from the day

@@ -5,24 +5,24 @@
  * else flipped, and over seven weeks it can be worth two or three games in the
  * standings. This module separates the two.
  *
- * Two things are measured, because "lucky" means both of them and they do come
- * apart:
+ * The score is record luck: your actual wins against the wins you'd have if
+ * you played the whole league every week (the all-play record). Scoring 140
+ * and losing is the week it catches, and so is scoring 80 and winning.
  *
- *   Record luck — your actual wins against the wins you'd have if you played
- *   the whole league every week (the all-play record). Scoring 140 and losing
- *   is the week this catches.
+ * Schedule luck — what the opponents you were handed scored, against what the
+ * league scored that week — is measured too, but only reported, never scored.
+ * It used to be half the score, and it counted luck that changed nothing: if
+ * you scored 20 above the week, your opponent's +10 or -10 is the same win,
+ * yet one read as a hard draw and the other as a soft one. Record luck only
+ * moves when a result does. Schedule luck stays as the explanation beside it
+ * ("they had good games against you"), not as part of the number.
  *
- *   Schedule luck — what the opponents you were handed scored, against what
- *   the league scored that week. Facing the one manager who went off is the
- *   week this catches, and it is the mechanism behind most record luck.
- *
- * They are standardised within the league and averaged into one score from
- * -100 to +100, because luck is zero-sum: somebody's soft schedule is somebody
- * else's hard one, so the only honest frame of reference is the other eleven
- * teams. 0 is exactly average, above it means the season has gone your way,
- * and the scale is two standard deviations wide in each direction — so -100
- * and +100 are real extremes rather than wherever the worst-off team happens
- * to land.
+ * Record luck is standardised within the league onto a score from -100 to
+ * +100, because luck is zero-sum: somebody's stolen win is somebody else's
+ * lost one, so the only honest frame of reference is the other eleven teams.
+ * 0 is exactly average, above it means the season has gone your way, and the
+ * scale is two standard deviations wide in each direction — so -100 and +100
+ * are real extremes rather than wherever the worst-off team happens to land.
  *
  * Nothing here fetches or draws. It takes what Sleeper already sent and
  * returns rows, so the arithmetic can be tested without a browser or a season.
@@ -210,10 +210,15 @@ export function luckTable({ matchups, rosters = [], users = [], league = null,
         tied: f.result === 0.5,
         allPlay: f.allPlay,
         // The week this team should have won and didn't, or the other way
-        // round: beat most of the league and lost, or beat almost nobody and
-        // won anyway. The weeks the whole metric is made of.
-        stolen: f.result === 0 && f.allPlay >= 0.5,
-        gifted: f.result === 1 && f.allPlay < 0.5,
+        // round: beat two-thirds of the league and lost, or beat a third or
+        // less and won anyway. The weeks the whole metric is made of.
+        //
+        // Thirds, not halves. At half, a team that finished 6th of 12 and
+        // lost to the 3rd-best score was "robbed" — beaten by a good team on
+        // a middling week, which is a loss, not a theft. In a 12-team league
+        // the line is 8 of 11 for robbed and 3 of 11 for gifted.
+        stolen: f.result === 0 && f.allPlay >= 2 / 3,
+        gifted: f.result === 1 && f.allPlay <= 1 / 3,
       });
     }
   }
@@ -221,13 +226,10 @@ export function luckTable({ matchups, rosters = [], users = [], league = null,
   const played = (t) => t.wins + t.losses + t.ties;
   const games = Math.max(...teams.map(played), 0);
 
-  // Both components in the same direction — up is luckier — and then onto one
-  // scale, so a team that won games it shouldn't have and a team that was
-  // handed cold opponents are measured against the same middle.
+  // Wins above what the all-play earned, up is luckier, standardised against
+  // the rest of the league. The score is this and only this.
   const recordLuck = teams.map((t) => t.wins + t.ties / 2 - t.expectedWins);
-  const scheduleLuck = teams.map((t) => t.scheduleLuckPoints);
   const zRecord = zScores(recordLuck);
-  const zSchedule = zScores(scheduleLuck);
 
   const rows = teams.map((t, i) => ({
     ...t,
@@ -245,7 +247,7 @@ export function luckTable({ matchups, rosters = [], users = [], league = null,
     scheduleLuckPerWeek: played(t) ? round2(t.scheduleLuckPoints / played(t)) : 0,
     // + 0 because Math.round(-0.3) is -0, which prints and compares as a
     // different number from the 0 it means.
-    luck: Math.round(clamp(SPREAD * mean([zRecord[i], zSchedule[i]]), -100, 100)) + 0,
+    luck: Math.round(clamp(SPREAD * zRecord[i], -100, 100)) + 0,
   }));
 
   const current = placeBy(rows.map((r) => ({ ...r, record: r.wins + r.ties / 2 })), "record");

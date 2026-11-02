@@ -225,8 +225,8 @@
      fixed width except the name, which also carries the robbed/gifted flag. */
   .wk{
     display:grid;align-items:center;column-gap:8px;
-    grid-template-columns:38px 17px 50px 16px minmax(0,1fr) 50px 92px;
-    grid-template-areas:"no res me vs opp them delta";
+    grid-template-columns:38px 17px 50px 46px 16px minmax(0,1fr) 50px 46px;
+    grid-template-areas:"no res me med vs opp them themd";
     font-family:var(--mono);font-size:11.5px;
     font-variant-numeric:tabular-nums;
     border-top:1px solid var(--board-dark);padding:4px 0 3px;
@@ -256,7 +256,15 @@
     display:flex;align-items:center;gap:7px;min-width:0;
   }
   .wk-opp-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
-  .wk-vs{grid-area:delta;font-size:10.5px;color:var(--ink-soft);cursor:help;text-align:right;}
+  /* Each score's ± against the league that week, right after the score it
+     belongs to and right-aligned so the decimals stack down the weeks. */
+  .wk-d{font-size:10.5px;color:var(--ink-soft);cursor:help;text-align:right;}
+  .wk-d-me{grid-area:med;}
+  .wk-d-them{grid-area:themd;}
+  .wks-key{
+    font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+    color:var(--ink-soft);margin:0 0 4px;
+  }
   .flag{
     flex-shrink:0;
     font-family:var(--display);font-weight:700;font-size:10.5px;
@@ -308,15 +316,16 @@
     .detail-in{padding:12px 12px 10px;}
     .detail-sum{font-size:12.5px;line-height:1.6;margin-bottom:8px;}
     .wk{
-      grid-template-columns:36px 22px 50px 20px 50px minmax(0,1fr);
-      grid-template-areas:"no res opp opp opp opp" ". . me vs them delta";
-      row-gap:3px;font-size:13.5px;padding:9px 0 8px;
+      grid-template-columns:34px 20px 48px 44px 18px 48px minmax(0,1fr);
+      grid-template-areas:"no res opp opp opp opp opp" ". . me med vs them themd";
+      column-gap:6px;row-gap:3px;font-size:13.5px;padding:9px 0 8px;
     }
     .wk-no{font-size:11px;}
     .wk-res{font-size:13px;line-height:20px;}
     .wk-opp{color:var(--ink);font-family:var(--body);font-weight:600;font-size:14px;}
     .wk-dash{text-align:center;}
-    .wk-vs{font-size:11.5px;}
+    .wk-d{font-size:11.5px;}
+    .wks-key{font-size:11px;}
     .flag{font-size:11px;}
   }
 
@@ -432,18 +441,18 @@
       league</em> — luck is zero-sum, so the only fair comparison is the other
       teams in it. ±100 is two standard deviations, so the ends are real
       extremes.</p>
-    <p>It is the average of two things. <b>Record luck</b> is wins against the
-      all-play record — what you'd have if you played the whole league every
-      week — which catches scoring 140 and losing. <b>Schedule luck</b> is what
-      the opponents you drew scored against what the league scored that week,
-      which catches facing the one manager who went off.</p>
+    <p>It measures one thing: your wins against the <b>all-play record</b> —
+      what you'd have if you played the whole league every week. Scoring 140
+      and losing counts against you; scoring 80 and winning counts for you.
+      How well your opponents played shows in the week by week, but only
+      counts when it changed a result.</p>
     <p><b>Exp</b> is the place the all-play record earns, with that record under
       it. <b>Swing</b> is how many places the schedule has moved you from it.</p>
     <p>
       <span class="key"><i class="lucky"></i> the season has gone your way</span>
       <span class="key"><i class="unlucky"></i> it hasn't</span>
-      <span class="key"><b>robbed</b> = beat most of the league and lost</span>
-      <span class="key"><b>gifted</b> = beat almost none of it and won</span>
+      <span class="key"><b>robbed</b> = outscored two-thirds of the league and lost</span>
+      <span class="key"><b>gifted</b> = outscored a third or less and won</span>
     </p>
     <p>Finished weeks only — a week in progress is left out until every team in
       it has a score, and playoff weeks never count.</p>

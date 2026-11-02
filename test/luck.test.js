@@ -2,8 +2,9 @@
  *
  * Four teams and two weeks, with the scores picked so every number below can
  * be worked out on paper: the all-play records are thirds, the league averages
- * are whole numbers, and the two luck components disagree about one team — so
- * a change that quietly collapsed them into one would fail here.
+ * are whole numbers, and record luck and schedule luck disagree about one team
+ * — so a change that quietly let schedule luck back into the score would fail
+ * here.
  */
 
 import { test } from "node:test";
@@ -109,17 +110,20 @@ test("schedule luck is what the opponents you drew scored against the league", (
   assert.equal(row("Team D").scheduleLuckPoints, 10);
 });
 
-test("the two components are both in the score, and disagree about D", () => {
-  // D's record is exactly what it earned — it lost both and deserved to — so
-  // record luck alone would call it average. But it drew the two softest
-  // opponents available, which is luck it failed to use, and the score says so.
+test("the score is record luck alone, so soft opponents that changed nothing don't count", () => {
+  // D drew the two softest opponents available, ten points a game under the
+  // week — and lost both anyway, exactly as its own scores said it would. The
+  // soft draw changed no result, so it is no luck at all: D scores 0. When
+  // schedule luck was half the score, D came out lucky for losing twice.
+  assert.equal(row("Team D").scheduleLuckPoints, 10);
   assert.equal(row("Team D").recordLuck, 0);
-  assert.equal(row("Team D").luck, 20);
-  assert.equal(row("Team B").luck, 0); // average on both counts
+  assert.equal(row("Team D").luck, 0);
+  assert.equal(row("Team B").luck, 0);
 
-  // A is the unluckiest team in the league on both counts; C the luckiest.
-  assert.equal(row("Team A").luck, -76);
-  assert.equal(row("Team C").luck, 56);
+  // A won one game of the 1.67 its scores earned, C two of 1.33: two-thirds of
+  // a win each way, which in a league this small is 1.41 standard deviations.
+  assert.equal(row("Team A").luck, -71);
+  assert.equal(row("Team C").luck, 71);
 });
 
 test("place is the standings, expected place is the all-play standings", () => {
@@ -148,6 +152,30 @@ test("the weeks that went the wrong way are marked", () => {
   const b = row("Team B").weeks.find((w) => w.week === 2);
   assert.equal(b.gifted, true);   // beat one of three and won
   assert.equal(row("Team A").weeks.find((w) => w.week === 1).stolen, false);
+});
+
+test("robbed and gifted take a third of the league either side, not half", () => {
+  // Twelve teams, one week, every score distinct: roster r scores 230 - 10r,
+  // so roster r beats 12 - r of the other eleven. The pairings put a loser
+  // and a winner either side of each cutoff.
+  const rosters = Array.from({ length: 12 }, (_, i) => ({ roster_id: i + 1, owner_id: null }));
+  const pairs = [[1, 4], [2, 5], [3, 6], [7, 10], [8, 11], [9, 12]];
+  const week = pairs.flatMap(([x, y], i) => [
+    { roster_id: x, matchup_id: i + 1, points: 230 - 10 * x },
+    { roster_id: y, matchup_id: i + 1, points: 230 - 10 * y },
+  ]);
+  const t = luckTable({ matchups: { 1: week }, rosters, users: [], league: LEAGUE });
+  const wk = (id) => t.rows.find((r) => r.rosterId === id).weeks[0];
+
+  assert.equal(wk(4).stolen, true);   // beat 8 of 11 and lost: robbed
+  assert.equal(wk(5).stolen, false);  // beat 7 and lost
+  // Beat 6 of 11 — just over half — and lost to the 3rd-best score. Under a
+  // halfway cutoff this was "robbed"; it is a middling week and a good opponent.
+  assert.equal(wk(6).stolen, false);
+
+  assert.equal(wk(9).gifted, true);   // beat 3 of 11 and won: gifted
+  assert.equal(wk(8).gifted, false);  // beat 4 and won
+  assert.equal(wk(7).gifted, false);  // beat 5 and won
 });
 
 test("a league with no spread is all average rather than a divide by zero", () => {

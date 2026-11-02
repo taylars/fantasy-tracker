@@ -89,18 +89,22 @@ function weekHtml(w) {
   const mark = w.stolen ? '<span class="flag stolen">robbed</span>'
     : w.gifted ? '<span class="flag gifted">gifted</span>' : "";
   const result = w.tied ? "T" : w.won ? "W" : "L";
-  // How the opponent did against the week, not against you: this is the "did
-  // they have a good game on me" column, and the sign is what matters.
-  const vs = w.oppPoints - w.leagueAvg;
+  // Both scores against the week, each beside its own score: yours says
+  // whether you had a good week, theirs whether they had one on you. Same
+  // yardstick and same sign either way — plus is above the league that week.
+  const avg = w.leagueAvg.toFixed(1);
+  const delta = (points, whose) =>
+    `<span class="wk-d wk-d-${whose}" title="${whose === "me" ? "your" : "their"} score against the league's ${avg} that week">` +
+    `${signed(points - w.leagueAvg, 1)}</span>`;
   return '<li class="wk">' +
     `<span class="wk-no">wk ${w.week}</span>` +
     `<span class="wk-res ${result}">${result}</span>` +
     `<span class="wk-score wk-me">${w.points.toFixed(1)}</span>` +
+    delta(w.points, "me") +
     `<span class="wk-dash">vs</span>` +
     `<span class="wk-opp"><span class="wk-opp-name">${esc(w.opponent)}</span>${mark}</span>` +
     `<span class="wk-score wk-them">${w.oppPoints.toFixed(1)}</span>` +
-    `<span class="wk-vs" title="their score against the league's ${w.leagueAvg.toFixed(1)} that week">` +
-      `${signed(vs, 1)} vs week</span>` +
+    delta(w.oppPoints, "them") +
     "</li>";
 }
 
@@ -143,6 +147,8 @@ function rowHtml(r) {
           `Opponents averaged <b>${signed(oppVsWeek, 1)}</b> vs week against them, ` +
           `${draw}.` +
         "</p>" +
+        // Said once here rather than as "vs week" after every number.
+        '<p class="wks-key">± is each score against that week\'s league average</p>' +
         '<ul class="wks">' + r.weeks.map(weekHtml).join("") + "</ul>" +
       "</div>" +
     "</td></tr>" +
