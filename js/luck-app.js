@@ -32,6 +32,13 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
 
 const signed = (n, digits = 0) => (n > 0 ? "+" : n < 0 ? "−" : "±") + Math.abs(n).toFixed(digits);
 
+/* The luck score as the page shows it: signed around zero rather than on
+ * js/luck.js's 0-100. The bar already grows out of the middle, so the number
+ * beside it should start from the middle too — +45 and -31 say which side and
+ * how far without having to remember that 50 is the average.
+ */
+const plusMinus = (luck) => signed(luck - 50);
+
 /* ---------- the session ---------- */
 
 /* The address bar is how a table gets bookmarked or sent to the league;
@@ -125,7 +132,7 @@ function rowHtml(r) {
         '<span class="tm-mgr">' + esc(r.manager) + "</span></td>" +
       `<td class="c-rec">${record}</td>` +
       '<td class="c-luck">' + meter(r.luck) +
-        `<span class="luck-n">${r.luck}</span></td>` +
+        `<span class="luck-n">${plusMinus(r.luck)}</span></td>` +
       `<td class="c-exp">${r.expectedPlace}<span class="c-exp-rec">${expRecord}</span></td>` +
       `<td class="c-swing ${swingClass}">${swing}</td>` +
     "</tr>" +
@@ -159,8 +166,8 @@ function render() {
   const unluckiest = [...rows].sort((a, b) => a.luck - b.luck)[0];
   $("standing").innerHTML =
     `Through <b>week ${throughWeek}</b> · ${rows.length} teams · ` +
-    `luckiest <b>${esc(luckiest.team)}</b> (${luckiest.luck}) · ` +
-    `unluckiest <b>${esc(unluckiest.team)}</b> (${unluckiest.luck})`;
+    `luckiest <b>${esc(luckiest.team)}</b> (${plusMinus(luckiest.luck)}) · ` +
+    `unluckiest <b>${esc(unluckiest.team)}</b> (${plusMinus(unluckiest.luck)})`;
 
   $("table-wrap").innerHTML =
     '<table class="tbl">' +
@@ -168,7 +175,7 @@ function render() {
         '<th class="c-place" title="where the league has them now">#</th>' +
         '<th class="c-team">Team</th>' +
         '<th class="c-rec">Rec</th>' +
-        '<th class="c-luck" title="50 is average for this league; two standard deviations each way">Luck</th>' +
+        '<th class="c-luck" title="0 is average for this league; ±50 is two standard deviations">Luck</th>' +
         '<th class="c-exp" title="place on the all-play record, and that record">Exp</th>' +
         '<th class="c-swing" title="places the schedule has moved them">Swing</th>' +
       "</tr></thead>" +

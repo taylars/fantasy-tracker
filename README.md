@@ -218,11 +218,12 @@ Two numbers, both built from the weekly scores and nothing else:
   league scored that week. Facing the one manager who went off is the week this
   catches, and it is the mechanism behind most record luck.
 
-Both are standardised within the league and averaged into a 0-100 score, where
-50 is that league's average and the scale runs two standard deviations each
-way. The scale is *relative to the league on purpose*: luck is zero-sum, so a
+Both are standardised within the league and averaged into one score. The page
+shows it signed around zero, from −50 to +50, where 0 is that league's average
+and ±50 is two standard deviations; `js/luck.js` keeps it on 0-100 with 50 as
+the middle, and the page subtracts 50 to draw it. The scale is *relative to the league on purpose*: luck is zero-sum, so a
 soft schedule only exists against the eleven other schedules it was drawn from.
-It follows that the scores average to 50 and the expected wins add up to the
+It follows that the scores average to zero (50 inside `js/luck.js`) and the expected wins add up to the
 wins actually handed out — both worth checking if you change the arithmetic.
 
 The table orders by current place and shows the place the all-play record
