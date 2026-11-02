@@ -80,8 +80,10 @@ function meter(luck) {
 }
 
 function weekHtml(w) {
-  const mark = w.stolen ? ' <span class="flag stolen">robbed</span>'
-    : w.gifted ? ' <span class="flag gifted">gifted</span>' : "";
+  // The flag rides on the opponent's name: it is a verdict on that matchup,
+  // and most weeks have none, so a column of its own was mostly empty space.
+  const mark = w.stolen ? '<span class="flag stolen">robbed</span>'
+    : w.gifted ? '<span class="flag gifted">gifted</span>' : "";
   const result = w.tied ? "T" : w.won ? "W" : "L";
   // How the opponent did against the week, not against you: this is the "did
   // they have a good game on me" column, and the sign is what matters.
@@ -91,11 +93,11 @@ function weekHtml(w) {
     `<span class="wk-res ${result}">${result}</span>` +
     `<span class="wk-score wk-me">${w.points.toFixed(1)}</span>` +
     `<span class="wk-dash">vs</span>` +
-    `<span class="wk-opp">${esc(w.opponent)}</span>` +
+    `<span class="wk-opp"><span class="wk-opp-name">${esc(w.opponent)}</span>${mark}</span>` +
     `<span class="wk-score wk-them">${w.oppPoints.toFixed(1)}</span>` +
     `<span class="wk-vs" title="their score against the league's ${w.leagueAvg.toFixed(1)} that week">` +
       `${signed(vs, 1)} vs week</span>` +
-    mark + "</li>";
+    "</li>";
 }
 
 function rowHtml(r) {
