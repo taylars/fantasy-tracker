@@ -63,18 +63,21 @@ function readSession() {
  * deviation and the middle is the meaningful value — a fill would draw
  * "average" as half full, which reads as half bad. Green for lucky and red for unlucky, the
  * same pair as a win and a loss. Deutan vision can't separate those two, so
- * the colour is never carrying the reading alone: the score is printed next to
- * the bar, and which side of the middle line it grows on says the same thing.
+ * the colour is never carrying the reading alone: which side of the middle
+ * line the bar grows on says the same thing, and the length says how far.
+ *
+ * The exact score is not printed. The bar is the reading; the number is there
+ * on hover (the cell's title) for anyone who wants it, and as the meter's
+ * label for a screen reader, which has no bar to look at.
  */
 /* The width is a percentage of the whole track while the bar only owns half
  * of it, so ±100 is 50% and a score is halved to draw it. Get that wrong and
- * a big score runs past the end of the track and paints over the number
- * beside it, which is a thing this has already done once.
+ * a big score runs past the end of the track.
  */
 function meter(luck) {
   const side = luck >= 0 ? "up" : "down";
   const width = Math.min(Math.abs(luck) / 2, 50);
-  return '<span class="meter" aria-hidden="true">' +
+  return `<span class="meter" role="img" aria-label="Luck ${signed(luck)}">` +
     '<span class="meter-mid"></span>' +
     `<span class="meter-bar ${side}" style="width:${width.toFixed(1)}%"></span>` +
     "</span>";
@@ -125,8 +128,9 @@ function rowHtml(r) {
       '<td class="c-team"><span class="tm-name">' + esc(r.team) + "</span>" +
         '<span class="tm-mgr">' + esc(r.manager) + "</span></td>" +
       `<td class="c-rec">${record}</td>` +
-      '<td class="c-luck">' + meter(r.luck) +
-        `<span class="luck-n">${signed(r.luck)}</span></td>` +
+      // The title is on the whole cell rather than the 12px bar, so the
+      // number turns up wherever in the column you happen to hover.
+      `<td class="c-luck" title="Luck ${signed(r.luck)}">` + meter(r.luck) + "</td>" +
       `<td class="c-exp">${r.expectedPlace}<span class="c-exp-rec">${expRecord}</span></td>` +
       `<td class="c-swing ${swingClass}">${swing}</td>` +
     "</tr>" +
@@ -160,8 +164,8 @@ function render() {
   const unluckiest = [...rows].sort((a, b) => a.luck - b.luck)[0];
   $("standing").innerHTML =
     `Through <b>week ${throughWeek}</b> · ${rows.length} teams · ` +
-    `luckiest <b>${esc(luckiest.team)}</b> (${signed(luckiest.luck)}) · ` +
-    `unluckiest <b>${esc(unluckiest.team)}</b> (${signed(unluckiest.luck)})`;
+    `luckiest <b>${esc(luckiest.team)}</b> · ` +
+    `unluckiest <b>${esc(unluckiest.team)}</b>`;
 
   $("table-wrap").innerHTML =
     '<table class="tbl">' +
@@ -169,7 +173,7 @@ function render() {
         '<th class="c-place" title="where the league has them now">#</th>' +
         '<th class="c-team">Team</th>' +
         '<th class="c-rec">Rec</th>' +
-        '<th class="c-luck" title="0 is average for this league; ±100 is two standard deviations">Luck</th>' +
+        '<th class="c-luck" title="Hover a bar for the score: 0 is average for this league, ±100 is two standard deviations">Luck</th>' +
         '<th class="c-exp" title="place on the all-play record, and that record">Exp</th>' +
         '<th class="c-swing" title="places the schedule has moved them">Swing</th>' +
       "</tr></thead>" +
