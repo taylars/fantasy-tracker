@@ -16,22 +16,24 @@
  *   the league scored that week. Facing the one manager who went off is the
  *   week this catches, and it is the mechanism behind most record luck.
  *
- * They are standardised within the league and averaged into one 0-100 score,
- * because luck is zero-sum: somebody's soft schedule is somebody else's hard
- * one, so the only honest frame of reference is the other eleven teams. 50 is
- * exactly average, above it means the season has gone your way, and the scale
- * is two standard deviations wide in each direction — so 0 and 100 are real
- * extremes rather than wherever the worst-off team happens to land.
+ * They are standardised within the league and averaged into one score from
+ * -100 to +100, because luck is zero-sum: somebody's soft schedule is somebody
+ * else's hard one, so the only honest frame of reference is the other eleven
+ * teams. 0 is exactly average, above it means the season has gone your way,
+ * and the scale is two standard deviations wide in each direction — so -100
+ * and +100 are real extremes rather than wherever the worst-off team happens
+ * to land.
  *
  * Nothing here fetches or draws. It takes what Sleeper already sent and
  * returns rows, so the arithmetic can be tested without a browser or a season.
  */
 
-// Where the score lands on the 0-100 scale: 50 is the league average, and a
-// team two standard deviations clear of it hits the end. Luck in a 12-team
-// league rarely gets past 1.8σ, so the ends stay unclaimed in a normal season,
-// which is the point of a fixed scale rather than one stretched to the field.
-const SPREAD = 25; // points of score per standard deviation
+// Where the score lands on the -100 to +100 scale: 0 is the league average,
+// and a team two standard deviations clear of it hits the end. Luck in a
+// 12-team league rarely gets past 1.8σ, so the ends stay unclaimed in a normal
+// season, which is the point of a fixed scale rather than one stretched to the
+// field.
+const SPREAD = 50; // points of score per standard deviation
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
@@ -45,7 +47,7 @@ function stdev(xs) {
 
 /* Standardise, and treat a league with no spread as all-average rather than
  * dividing by zero. A season where everyone's luck is identical has no luckier
- * half, and 50 across the board says exactly that.
+ * half, and 0 across the board says exactly that.
  */
 function zScores(values) {
   const m = mean(values);
@@ -241,7 +243,9 @@ export function luckTable({ matchups, rosters = [], users = [], league = null,
     // Per week, which is the number that means something to a manager: "my
     // opponents have been nine points light every week".
     scheduleLuckPerWeek: played(t) ? round2(t.scheduleLuckPoints / played(t)) : 0,
-    luck: Math.round(clamp(50 + SPREAD * mean([zRecord[i], zSchedule[i]]), 0, 100)),
+    // + 0 because Math.round(-0.3) is -0, which prints and compares as a
+    // different number from the 0 it means.
+    luck: Math.round(clamp(SPREAD * mean([zRecord[i], zSchedule[i]]), -100, 100)) + 0,
   }));
 
   const current = placeBy(rows.map((r) => ({ ...r, record: r.wins + r.ties / 2 })), "record");

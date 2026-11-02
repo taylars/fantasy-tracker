@@ -1,8 +1,7 @@
 # Fantasy Tracker
 
 Two pages for a Sleeper league, both running entirely in your browser, joined
-by one header. The repository is still called `fantasy-drafter`, which is why
-the published address is `…/fantasy-drafter/`.
+by one header, published at <https://taylars.github.io/fantasy-tracker/>.
 
 A draft board that runs entirely in your browser. Type a Sleeper username and
 it prices every available player against the roster you hold, the picks you
@@ -223,12 +222,11 @@ Two numbers, both built from the weekly scores and nothing else:
   league scored that week. Facing the one manager who went off is the week this
   catches, and it is the mechanism behind most record luck.
 
-Both are standardised within the league and averaged into one score. The page
-shows it signed around zero, from −50 to +50, where 0 is that league's average
-and ±50 is two standard deviations; `js/luck.js` keeps it on 0-100 with 50 as
-the middle, and the page subtracts 50 to draw it. The scale is *relative to the league on purpose*: luck is zero-sum, so a
-soft schedule only exists against the eleven other schedules it was drawn from.
-It follows that the scores average to zero (50 inside `js/luck.js`) and the expected wins add up to the
+Both are standardised within the league and averaged into one score from −100
+to +100, where 0 is that league's average and ±100 is two standard deviations.
+The scale is *relative to the league on purpose*: luck is zero-sum, so a soft
+schedule only exists against the eleven other schedules it was drawn from. It
+follows that the scores average to zero and the expected wins add up to the
 wins actually handed out — both worth checking if you change the arithmetic.
 
 The table orders by current place and shows the place the all-play record
@@ -414,7 +412,7 @@ restating his whole line.
 
 `test/luck.test.js` is the exception to all of this, because the luck metric
 is arithmetic rather than a judgment: it runs on a four-team, two-week league
-small enough that every expected win, schedule-luck total and 0-100 score in
+small enough that every expected win, schedule-luck total and luck score in
 the file was worked out on paper first. Pinning those numbers down is the
 point. It also holds the one case that actually bit — a week in progress, where
 every score is above zero and none of them are final.

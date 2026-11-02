@@ -114,12 +114,12 @@ test("the two components are both in the score, and disagree about D", () => {
   // record luck alone would call it average. But it drew the two softest
   // opponents available, which is luck it failed to use, and the score says so.
   assert.equal(row("Team D").recordLuck, 0);
-  assert.equal(row("Team D").luck, 60);
-  assert.equal(row("Team B").luck, 50); // average on both counts
+  assert.equal(row("Team D").luck, 20);
+  assert.equal(row("Team B").luck, 0); // average on both counts
 
   // A is the unluckiest team in the league on both counts; C the luckiest.
-  assert.equal(row("Team A").luck, 12);
-  assert.equal(row("Team C").luck, 78);
+  assert.equal(row("Team A").luck, -76);
+  assert.equal(row("Team C").luck, 56);
 });
 
 test("place is the standings, expected place is the all-play standings", () => {
@@ -160,14 +160,14 @@ test("a league with no spread is all average rather than a divide by zero", () =
     ],
   };
   const rows = luckTable({ matchups: flat, rosters: ROSTERS, users: USERS, league: LEAGUE }).rows;
-  assert.deepEqual(rows.map((r) => r.luck), [50, 50, 50, 50]);
+  assert.deepEqual(rows.map((r) => r.luck), [0, 0, 0, 0]);
   assert.deepEqual(rows.map((r) => r.ties), [1, 1, 1, 1]);
 });
 
 test("a season nobody has played yet is empty rather than broken", () => {
   const t = luckTable({ matchups: { 1: MATCHUPS[3] }, rosters: ROSTERS, users: USERS, league: LEAGUE });
   assert.equal(t.throughWeek, 0);
-  assert.deepEqual(t.rows.map((r) => r.luck), [50, 50, 50, 50]);
+  assert.deepEqual(t.rows.map((r) => r.luck), [0, 0, 0, 0]);
   assert.deepEqual(t.rows.map((r) => r.gamesPlayed), [0, 0, 0, 0]);
 });
 

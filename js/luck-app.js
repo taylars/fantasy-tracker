@@ -32,13 +32,6 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
 
 const signed = (n, digits = 0) => (n > 0 ? "+" : n < 0 ? "−" : "±") + Math.abs(n).toFixed(digits);
 
-/* The luck score as the page shows it: signed around zero rather than on
- * js/luck.js's 0-100. The bar already grows out of the middle, so the number
- * beside it should start from the middle too — +45 and -31 say which side and
- * how far without having to remember that 50 is the average.
- */
-const plusMinus = (luck) => signed(luck - 50);
-
 /* ---------- the session ---------- */
 
 /* The address bar is how a table gets bookmarked or sent to the league;
@@ -63,23 +56,24 @@ function readSession() {
 
 /* ---------- drawing ---------- */
 
-/* The luck meter: one bar, growing out of the 50 line, left for a season that
- * has gone against you and right for one that hasn't.
+/* The luck meter: one bar, growing out of the middle line, left for a season
+ * that has gone against you and right for one that hasn't.
  *
- * Diverging rather than a 0-100 fill, because the number is a deviation and the
- * middle is the meaningful value — a fill from zero would draw "average" as
- * half full, which reads as half bad. Green for lucky and red for unlucky, the
+ * Diverging rather than a fill from the left, because the number is a
+ * deviation and the middle is the meaningful value — a fill would draw
+ * "average" as half full, which reads as half bad. Green for lucky and red for unlucky, the
  * same pair as a win and a loss. Deutan vision can't separate those two, so
  * the colour is never carrying the reading alone: the score is printed next to
- * the bar, and which side of the 50 line it grows on says the same thing.
+ * the bar, and which side of the middle line it grows on says the same thing.
  */
-/* The width is the distance from 50, not twice it: the bar is a percentage of
- * the whole track while it only owns half of it. Doubled, a 94 ran to 138% of
- * the track and painted straight over the number beside it.
+/* The width is a percentage of the whole track while the bar only owns half
+ * of it, so ±100 is 50% and a score is halved to draw it. Get that wrong and
+ * a big score runs past the end of the track and paints over the number
+ * beside it, which is a thing this has already done once.
  */
 function meter(luck) {
-  const side = luck >= 50 ? "up" : "down";
-  const width = Math.min(Math.abs(luck - 50), 50);
+  const side = luck >= 0 ? "up" : "down";
+  const width = Math.min(Math.abs(luck) / 2, 50);
   return '<span class="meter" aria-hidden="true">' +
     '<span class="meter-mid"></span>' +
     `<span class="meter-bar ${side}" style="width:${width.toFixed(1)}%"></span>` +
@@ -132,7 +126,7 @@ function rowHtml(r) {
         '<span class="tm-mgr">' + esc(r.manager) + "</span></td>" +
       `<td class="c-rec">${record}</td>` +
       '<td class="c-luck">' + meter(r.luck) +
-        `<span class="luck-n">${plusMinus(r.luck)}</span></td>` +
+        `<span class="luck-n">${signed(r.luck)}</span></td>` +
       `<td class="c-exp">${r.expectedPlace}<span class="c-exp-rec">${expRecord}</span></td>` +
       `<td class="c-swing ${swingClass}">${swing}</td>` +
     "</tr>" +
@@ -166,8 +160,8 @@ function render() {
   const unluckiest = [...rows].sort((a, b) => a.luck - b.luck)[0];
   $("standing").innerHTML =
     `Through <b>week ${throughWeek}</b> · ${rows.length} teams · ` +
-    `luckiest <b>${esc(luckiest.team)}</b> (${plusMinus(luckiest.luck)}) · ` +
-    `unluckiest <b>${esc(unluckiest.team)}</b> (${plusMinus(unluckiest.luck)})`;
+    `luckiest <b>${esc(luckiest.team)}</b> (${signed(luckiest.luck)}) · ` +
+    `unluckiest <b>${esc(unluckiest.team)}</b> (${signed(unluckiest.luck)})`;
 
   $("table-wrap").innerHTML =
     '<table class="tbl">' +
@@ -175,7 +169,7 @@ function render() {
         '<th class="c-place" title="where the league has them now">#</th>' +
         '<th class="c-team">Team</th>' +
         '<th class="c-rec">Rec</th>' +
-        '<th class="c-luck" title="0 is average for this league; ±50 is two standard deviations">Luck</th>' +
+        '<th class="c-luck" title="0 is average for this league; ±100 is two standard deviations">Luck</th>' +
         '<th class="c-exp" title="place on the all-play record, and that record">Exp</th>' +
         '<th class="c-swing" title="places the schedule has moved them">Swing</th>' +
       "</tr></thead>" +
