@@ -107,6 +107,16 @@ function rowHtml(r) {
   const record = `${r.wins}-${r.losses}` + (r.ties ? `-${r.ties}` : "");
   const expRecord = `${r.expectedWins.toFixed(1)}-${r.expectedLosses.toFixed(1)}`;
 
+  // The opponents' side of schedule luck, signed the way the week rows sign
+  // it: plus means they scored above the league that week, which is bad for
+  // you. scheduleLuckPerWeek runs the other way (plus is good for you), and
+  // printing it straight into a sentence about the opponents' scoring said
+  // "-10.4 off the average — a hard draw" for opponents who were 10.4 above.
+  const oppVsWeek = -r.scheduleLuckPerWeek;
+  const draw = oppVsWeek > 0 ? "above the league average — a hard draw"
+    : oppVsWeek < 0 ? "below the league average — a soft draw"
+    : "right on the league average — an even draw";
+
   return '<tbody class="team' + (open ? " open" : "") + '">' +
     `<tr class="team-row" data-roster="${r.rosterId}" tabindex="0" role="button"` +
       ` aria-expanded="${open}" title="click for the week by week">` +
@@ -125,8 +135,8 @@ function rowHtml(r) {
           `Scored <b>${r.pointsFor.toFixed(1)}</b>, allowed <b>${r.pointsAgainst.toFixed(1)}</b>. ` +
           `Beat the field ${(r.expectedWins / Math.max(r.gamesPlayed, 1) * 100).toFixed(0)}% of the time ` +
           `for ${r.expectedWins.toFixed(2)} wins, and has <b>${signed(r.recordLuck, 2)}</b> against that. ` +
-          `Opponents came in <b>${signed(r.scheduleLuckPerWeek, 1)}</b> points off the weekly average ` +
-          `against them — ${r.scheduleLuckPerWeek > 0 ? "a soft draw" : r.scheduleLuckPerWeek < 0 ? "a hard draw" : "an even draw"}.` +
+          `Opponents averaged <b>${signed(oppVsWeek, 1)}</b> vs week against them, ` +
+          `${draw}.` +
         "</p>" +
         '<ul class="wks">' + r.weeks.map(weekHtml).join("") + "</ul>" +
       "</div>" +
