@@ -128,7 +128,9 @@ function rowHtml(r) {
   return '<tbody class="team' + (open ? " open" : "") + '">' +
     `<tr class="team-row" data-roster="${r.rosterId}" tabindex="0" role="button"` +
       ` aria-expanded="${open}" title="click for the week by week">` +
-      `<td class="c-place">${r.place}</td>` +
+      // The record rides under the place as well as in its own column: on a
+      // phone the column is gone, and place is what a record decides anyway.
+      `<td class="c-place">${r.place}<span class="c-place-rec">${record}</span></td>` +
       '<td class="c-team"><span class="tm-name">' + esc(r.team) + "</span>" +
         '<span class="tm-mgr">' + esc(r.manager) + "</span></td>" +
       `<td class="c-rec">${record}</td>` +

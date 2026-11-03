@@ -190,6 +190,8 @@
   }
 
   .c-exp{font-family:var(--mono);font-size:13px;font-weight:600;width:62px;}
+  /* Desktop has a record column; this copy is for phones, which don't. */
+  .c-place-rec{display:none;}
   .c-exp-rec{
     display:block;font-size:9.5px;font-weight:500;
     letter-spacing:.04em;color:var(--ink-soft);
@@ -289,10 +291,11 @@
 
   @media (max-width:560px){
     .field{flex:1 1 100%;}
-    /* The record is the one column the table can lose: it is the two numbers
-       everybody already knows, and the place beside it implies them.
+    /* The record column goes, but the record doesn't: it moves under the
+       place, the way the expected record already sits under the expected
+       place, so a phone shows both records without a column for either.
 
-       Collapsed to zero width rather than display:none. Hidden cells take
+       The column is collapsed to zero width rather than display:none. Hidden cells take
        the column out of the header row, but the open week-by-week spans all
        six columns, and as soon as one opened the table rebuilt the missing
        column and took its width back out of the team names — every name in
@@ -301,12 +304,20 @@
     .tbl thead th.c-rec,.team-row>td.c-rec{
       width:0;padding:0;overflow:hidden;font-size:0;
     }
-    .c-place{width:28px;font-size:19px;}
-    .c-luck{width:96px;}
-
-    .c-exp{width:32px;}
-    .c-exp-rec{display:none;}
-    .c-swing{width:38px;}
+    .c-place{width:40px;font-size:19px;padding-left:2px;padding-right:2px;}
+    .c-place-rec{
+      display:block;margin-top:3px;
+      font-family:var(--mono);font-size:10.5px;font-weight:600;
+      line-height:1.1;letter-spacing:0;
+    }
+    .c-luck{width:76px;}
+    .c-exp{width:58px;padding-left:4px;padding-right:4px;}
+    .c-exp-rec{font-size:10px;margin-top:3px;letter-spacing:0;white-space:nowrap;}
+    .c-swing{width:32px;padding-left:2px;}
+    /* The column headers are wider than these columns' contents, and at
+       desktop letter-spacing "Swing" ran past the edge of the table. */
+    .tbl thead th{letter-spacing:.04em;padding-left:4px;padding-right:4px;}
+    .tbl thead th.c-swing{padding:0 0 6px;text-align:right;}
     /* A phone gets two lines per game rather than one squeezed line: who it
        was against on top, at full width so the name and its flag fit, then
        the score line under it. Bigger type throughout — the desktop sizes
