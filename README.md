@@ -331,7 +331,7 @@ so it is worth the undocumented url.
 ```bash
 node bin/lineup.mjs show "Puka Nacua" "Jaxon Smith-Njigba"   # start which?
 node bin/lineup.mjs show --user taylars --start              # the whole lineup
-npm run lineup:backtest                                      # how wrong is it?
+npm run lineup:backtest                                      # how wrong is it, by position and week?
 node bin/lineup.mjs backtest --from 4 --no-matchup           # does a layer help?
 ```
 
@@ -347,12 +347,15 @@ else — the bundle is rebuilt per week, which is slow and is the point, since
 any shortcut leaks the answer — then scores it against what players actually
 scored, with Sleeper's own weekly projection for the same rows alongside.
 
-Over 2026 weeks 4–9, on startable players, mean absolute error in half PPR:
-**5.13 against Sleeper's 4.91**. Better than Sleeper at quarterback (5.77 to
-5.81), within a quarter of a point at every other position, about four tenths
-behind overall. A provider with paid data and a staff being slightly better at
-this is the expected result; the reason to run this anyway is that you can see
-what it is made of and argue with it.
+Over 2026 weeks 2–8, on every player either projection had at six points or
+more, mean absolute error in half PPR: **5.18 against Sleeper's 4.91**. Level
+with Sleeper at kicker, defence and running back; furthest behind at
+quarterback. Week by week the gap looks to close as the season fills in —
+0.40 points behind across weeks 2–5, statistically level (0.08) across weeks
+6–8, mostly from receivers and tight ends — but that is three weeks and the
+error bars are wide. A provider with paid data and last season to lean on
+being better early is the expected result; the reason to run this anyway is
+that you can see what it is made of and argue with it.
 
 The tables, the per-layer ablations, and what is known to be wrong with it are
 in [docs/lineup-model.md](docs/lineup-model.md).

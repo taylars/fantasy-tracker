@@ -372,10 +372,12 @@ function scored(player) {
 function actual(player) {
   const points = scored(player);
   if (points == null) return "";
-  // Coloured the same as the dot on the bar, so the two read together.
+  // Coloured the same as the dot on the bar, so the two read together. A
+  // projection with no range (Sleeper's) is judged against its one number:
+  // green if he beat it, red if he fell short.
   const where = player.ceiling > player.floor
     ? (points > player.ceiling ? "above" : points < player.floor ? "below" : "")
-    : "";
+    : (points > worth(player) ? "above" : points < worth(player) ? "below" : "");
   return `<span class="act${where ? ` ${where}` : ""}">${points.toFixed(1)}</span>`;
 }
 

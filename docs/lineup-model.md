@@ -167,41 +167,67 @@ the one that maximises the median.
 
 ## Validation
 
-`node bin/lineup.mjs backtest --from 4` projects each completed week using only
-the weeks before it — the bundle is rebuilt from scratch per week, which is
-slow and is the point, because any shortcut leaks the answer. Scored in half
-PPR against what players actually scored, with Sleeper's own weekly projection
-for the same rows as the benchmark.
+`node bin/lineup.mjs backtest --from 2 --to 8` projects each completed week
+using only the weeks before it — the bundle is rebuilt from scratch per week,
+which is slow and is the point, because any shortcut leaks the answer. Scored
+in half PPR against what players actually scored, with Sleeper's own weekly
+projection for the same players as the benchmark.
 
-Only **startable** players count: the model expects at least six points from
-them, which is roughly the bench line at every position. Mean absolute error
-over everyone who took a snap is dominated by four hundred people who were
-always going to score two, and a model that nails those and misses every
-starter would look excellent.
+Two rules keep the comparison fair:
 
-2026, weeks 4–9, 967 player-weeks:
+- **The pool is anyone either projection had at six points or more** —
+  roughly the bench line at every position. Counting everyone who took a snap
+  would let four hundred players who were always going to score two dominate
+  the average; counting only the players *this* model liked would let it pick
+  its own exam.
+- **Each week is tagged by who played**, as the page does for a finished week.
+  Sleeper keeps no history of injury tags, and today's would put a player hurt
+  this week out of week 4 too, handing his week-4 targets to his team-mates.
+  Knowing the inactives is what a projection has by kickoff, and Sleeper's own
+  is updated for them as well.
+
+2026, weeks 2–8 (week 9's Monday game not yet played), 1,505 player-weeks:
 
 | pos | n | MAE | bias | Sleeper MAE |
 |---|---|---|---|---|
-| QB | 150 | **5.77** | −0.85 | 5.81 |
-| RB | 174 | 6.17 | −1.00 | **5.88** |
-| WR | 266 | 5.76 | +0.31 | **5.32** |
-| TE | 130 | 4.75 | +1.60 | **4.57** |
-| K | 149 | 3.24 | −0.27 | **3.19** |
-| DEF | 98 | 3.99 | −0.15 | **3.78** |
-| all | 967 | 5.13 | −0.07 | **4.91** |
+| QB | 214 | 6.36 | −0.79 | **5.74** |
+| RB | 303 | 5.56 | −0.69 | **5.48** |
+| WR | 434 | 5.55 | −0.00 | **5.15** |
+| TE | 192 | 5.18 | +0.46 | **4.71** |
+| K | 202 | **3.23** | −0.21 | 3.28 |
+| DEF | 160 | 4.36 | −0.09 | **4.35** |
+| all | 1505 | 5.18 | −0.23 | **4.91** |
 
-So: better than Sleeper at quarterback, within a quarter of a point everywhere
-else, and about four tenths behind overall. That is the honest headline — a
-provider with paid data and a staff is slightly better at this than six weeks
-of free in-season signal, which is what you would expect, and the reason to
-run this anyway is the breakdown rather than the total. A number you can argue
-with beats a number you can't by more than four tenths of a point.
+Sleeper is better overall, by 0.27 points a player-week (95% interval 0.16 to
+0.39). The model is level at kicker, defence and running back, and furthest
+behind at quarterback.
 
-The tight end bias of +1.6 is the clearest thing left to fix. Tight ends gain
-more from the team target normalisation than they should, because receivers
-lose more volume to absences than tight ends do and the redistribution is
-blind to that.
+### Week by week
+
+Whether the gap closes as the season fills in, on the same players each week:
+
+| week | n | MAE | Sleeper MAE | gap | model closer |
+|---|---|---|---|---|---|
+| 2 | 240 | 5.30 | 4.92 | +0.39 | 49% |
+| 3 | 229 | 5.17 | 4.94 | +0.23 | 47% |
+| 4 | 229 | 4.96 | 4.49 | +0.46 | 41% |
+| 5 | 216 | 5.68 | 5.15 | +0.52 | 40% |
+| 6 | 200 | 4.60 | 4.68 | −0.08 | 54% |
+| 7 | 194 | 5.13 | 4.96 | +0.17 | 48% |
+| 8 | 197 | 5.40 | 5.24 | +0.16 | 48% |
+
+It looks like it does. Weeks 2–5 average a gap of 0.40 (interval 0.24 to
+0.56), clearly behind; weeks 6–8 average 0.08 (−0.09 to 0.25), statistically
+level. The narrowing is mostly receivers and tight ends: a WR gap of 0.64
+early is nothing from week 6, and TE goes from 0.68 to 0.13. That is the shape
+you would expect — every rate here starts out regressed to its position, and
+by week 6 five games of snaps and targets outweigh the prior, while Sleeper
+had last season to lean on from week 1. Quarterback stays behind throughout.
+
+Read it with the error bars, though. The early-to-late narrowing is 0.32 ±
+0.23, real but not by a wide margin, and a straight-line trend over the seven
+weeks (−0.05 a week ± 0.06) cannot rule out flat. Three weeks of "level" is a
+hint, not a result; the season's second half will say.
 
 ### Ablation
 
@@ -210,21 +236,20 @@ average:
 
 | | matchup on | matchup off |
 |---|---|---|
-| QB | **5.77** | 5.83 |
-| RB | 6.17 | **6.14** |
-| WR | 5.76 | **5.74** |
-| TE | **4.75** | 4.96 |
-| all | **5.13** | 5.16 |
+| QB | **6.36** | 6.44 |
+| RB | 5.56 | **5.50** |
+| WR | 5.55 | **5.53** |
+| TE | **5.18** | 5.23 |
+| all | 5.18 | 5.18 |
 
-It earns its place, narrowly — three hundredths of a point overall, mostly
-from quarterbacks and tight ends. Worth re-running as the season lengthens:
-before the team-volume normalisation went in, the same ablation said the
-matchup layer was *hurting*, and six weeks of defensive samples is a thin
-basis for either verdict.
+Over weeks 2–8 the matchup layer does nothing on balance: it helps
+quarterbacks and tight ends a little and costs backs and receivers about as
+much. Early weeks are mostly regressed to neutral by design, so this is worth
+re-running later in the season before deciding either way.
 
 ## Known limitations
 
-- Six weeks is a short backtest. Nothing here is validated across seasons.
+- Seven weeks is a short backtest. Nothing here is validated across seasons.
 - Early in a season the matchup factors are almost entirely regressed toward
   neutral, which is correct and also means the layer does nothing until about
   week 6.

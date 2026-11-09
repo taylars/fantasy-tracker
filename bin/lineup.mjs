@@ -365,8 +365,11 @@ async function backtest(args) {
   const sleeper = new SleeperClient({ cache });
   const year = await season(args, sleeper);
   const games = await schedule(year, { cache });
-  const last = (nextWeek(games) ?? 19) - 1;
-  const from = Number(args.from) || 4;
+  // The last week whose every game is final: a Monday-night game still to
+  // play would score its players as zeros.
+  const open = firstOpenWeek(games);
+  const last = (open ?? Math.max(...games.map((g) => g.week)) + 1) - 1;
+  const from = Number(args.from) || 2;
   const to = Math.min(Number(args.to) || last, last);
   if (to < from) { console.error(`nothing to backtest: weeks ${from}-${to}`); process.exit(1); }
 
@@ -375,7 +378,6 @@ async function backtest(args) {
   const all = [];
   for (let week = from; week <= to; week++) {
     const history = await weeksBefore(year, week, { cache });
-    const bundle = finalizeWeek(buildBundle({ season: year, week, weeks: history, games, matchup: !args["no-matchup"] }));
     const actual = await weekStats(year, week, { cache });
     const theirs = await weekProjections(year, week, { cache });
 
@@ -384,17 +386,28 @@ async function backtest(args) {
       if ((row.stats?.gp ?? 0) > 0) scored.set(row.player_id, scoreStats(row.stats, REFERENCE_SCORING));
     }
 
+    /* Tagged by who played, as the page does for a finished week. The tags
+     * on the stats are today's — Sleeper keeps no history of them — so
+     * reading them would put a player hurt this week out of week 4 too, and
+     * hand his week-4 targets to his team-mates. Knowing the inactives is
+     * what a projection has by kickoff, and Sleeper's own is updated for
+     * them too. */
+    const raw = buildBundle({ season: year, week, weeks: history, games, matchup: !args["no-matchup"] });
+    const bundle = finalizeWeek(tagByAttendance(raw, new Set(scored.keys())));
+
     for (const player of bundle.players) {
       if (!player.line) continue;
+      // A player who did not take the field is not a projection miss, he is
+      // an availability miss, and the two are different problems.
+      if (!scored.has(player.id)) continue;
       // The simulated mean rather than the expected line, because the
       // yardage bonuses only exist in the draws — scoring the line would
       // leave every hundred-yard game's bonus out of the comparison.
       const mine = project(player, REFERENCE_SCORING, { draws: 1500, week }).mean;
-      if (mine < STARTABLE) continue;
-      // A player who did not take the field is not a projection miss, he is
-      // an availability miss, and the two are different problems.
-      if (!scored.has(player.id)) continue;
       const them = theirs.has(player.id) ? scoreStats(theirs.get(player.id), REFERENCE_SCORING) : null;
+      // Startable by either projection, so the pool is not the players one
+      // side happened to like.
+      if (mine < STARTABLE && (them ?? 0) < STARTABLE) continue;
       all.push({ week, pos: player.pos, mine, them, truth: scored.get(player.id) });
     }
     log(`[backtest]   week ${week}: ${all.filter((r) => r.week === week).length} startable players`);
@@ -416,7 +429,12 @@ async function backtest(args) {
     };
   };
 
-  const report = { season: year, weeks: [from, to], matchup: !args["no-matchup"], by_position: {} };
+  const report = { season: year, weeks: [from, to], matchup: !args["no-matchup"], by_position: {},
+    by_week: Object.fromEntries([...new Set(all.map((r) => r.week))].map((w) => {
+      const rows = all.filter((r) => r.week === w && r.them != null);
+      const m = (f) => rows.reduce((a, r) => a + f(r), 0) / rows.length;
+      return [w, { n: rows.length, ours: m((r) => Math.abs(r.mine - r.truth)), sleeper: m((r) => Math.abs(r.them - r.truth)) }];
+    })) };
   const positions = ["QB", "RB", "WR", "TE", "K", "DEF"];
   for (const pos of positions.concat(["all"])) {
     const rows = pos === "all" ? all : all.filter((r) => r.pos === pos);
@@ -424,15 +442,32 @@ async function backtest(args) {
     report.by_position[pos] = table(rows);
   }
 
-  if (args.json) { console.log(JSON.stringify(report, null, 2)); return; }
+  if (args.json) { console.log(JSON.stringify({ ...report, rows: all }, null, 2)); return; }
 
-  console.log(`\n${year} weeks ${from}–${to}, half PPR, startable players only` +
+  console.log(`\n${year} weeks ${from}–${to}, half PPR, players either projection had at ${STARTABLE}+` +
     `${args["no-matchup"] ? " — matchup layer OFF" : ""}\n`);
   console.log("  pos      n     MAE    bias   |  same players: ours   Sleeper");
   for (const [pos, row] of Object.entries(report.by_position)) {
     console.log(`  ${pos.padEnd(5)} ${String(row.n).padStart(5)}  ${row.mae.toFixed(2).padStart(6)}` +
       `  ${signed(row.bias, 2).padStart(6)}   |  ${String(row.theirN).padStart(5)}` +
       `  ${row.theirMae.toFixed(2).padStart(6)}    ${row.sleeperMae.toFixed(2).padStart(6)}`);
+  }
+  /* Week by week, on the rows both sides projected: whether the gap moves
+   * as the season fills in. Early on everything here is regressed toward its
+   * position, and a provider with last season's data should have the edge;
+   * the question is whether it closes. */
+  const paired = all.filter((r) => r.them != null);
+  const weeksSeen = [...new Set(paired.map((r) => r.week))].sort((a, b) => a - b);
+  const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
+  console.log("\n  week     n    ours  Sleeper   diff   ours closer   bias: ours  Sleeper");
+  for (const week of weeksSeen) {
+    const rows = paired.filter((r) => r.week === week);
+    const ours = mean(rows.map((r) => Math.abs(r.mine - r.truth)));
+    const sl = mean(rows.map((r) => Math.abs(r.them - r.truth)));
+    const closer = rows.filter((r) => Math.abs(r.mine - r.truth) < Math.abs(r.them - r.truth)).length / rows.length;
+    console.log(`  ${String(week).padStart(4)} ${String(rows.length).padStart(5)}  ${ours.toFixed(2).padStart(6)}` +
+      `   ${sl.toFixed(2).padStart(6)}  ${signed(ours - sl, 2).padStart(6)}      ${(closer * 100).toFixed(0).padStart(3)}%` +
+      `        ${signed(mean(rows.map((r) => r.mine - r.truth)), 2).padStart(6)}  ${signed(mean(rows.map((r) => r.them - r.truth)), 2).padStart(6)}`);
   }
   console.log("\n  MAE is mean absolute error in points. bias is signed: positive means the");
   console.log("  model projects more than players score. The right-hand pair is the same");
