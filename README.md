@@ -1,17 +1,22 @@
 # Fantasy Tracker
 
-Two pages for a Sleeper league, both running entirely in your browser, joined
-by one header, published at <https://taylars.github.io/fantasy-tracker/>.
+Three pages for a Sleeper league, all running in your browser, joined by one
+header, published at <https://taylars.github.io/fantasy-tracker/>.
 
 A draft board that runs entirely in your browser. Type a Sleeper username and
 it prices every available player against the roster you hold, the picks you
 have left, and what waiting until your next turn would get you instead.
 
-Then, once the season is running, a [luck table](#the-luck-table) off the same
-username: how much of each team's record is the team, and how much is the
-schedule it was handed.
+Then, once the season is running, two more off the same username: a
+[set-lineup page](#setting-a-lineup), which projects every player on your
+roster for the coming week and tells you what to change, and a
+[luck table](#the-luck-table) — how much of each team's record is the team,
+and how much is the schedule it was handed.
 
-No server, no database, no install. Both read Sleeper directly from the page.
+No server, no database, no install. All three read Sleeper directly from the
+page. The lineup page also reads one static file of projections per week,
+built by the deploy every morning rather than committed, which is the only
+thing here that is not computed live.
 
 ## Try it
 
@@ -21,7 +26,9 @@ Open the published board, or run it locally:
 npm start
 ```
 
-Then <http://localhost:8000> for the board, or
+Then <http://localhost:8000> for the board,
+<http://localhost:8000/lineup.html> for this week's lineup (run
+`npm run lineup` once first — the projections are not in the repository), or
 <http://localhost:8000/luck.html> for the luck table. That is a static file
 server and nothing else —
 what runs locally is exactly what GitHub Pages serves, because there is no
@@ -36,6 +43,7 @@ the same-origin policy, and a `file://` page has no origin to share. Opening
 | | |
 |---|---|
 | `index.html` | the draft board |
+| `lineup.html` | setting a lineup: this week's projections, and the best one |
 | `luck.html` | the luck table: what the schedule did to the standings |
 | `css/site.css` · `js/nav.js` | the header both pages share, and its links |
 | `js/sleeper.js` | read-only Sleeper API client |
@@ -43,11 +51,18 @@ the same-origin policy, and a `file://` page has no origin to share. Opening
 | `js/value.js` | the value formula: lineup coverage, baselines, plan search |
 | `js/worker.js` | the formula, off the main thread |
 | `js/app.js` | the board page: start screen, pickers, rendering, live polling |
+| `js/project.js` | the weekly projection model: volume, opportunity, efficiency, matchup |
+| `js/lineup.js` | scoring a projection, simulating it, and filling the slots |
+| `js/lineup-app.js` | the lineup page: start screen, the card, the breakdowns |
 | `js/luck.js` | the luck metric: all-play records and schedule luck |
 | `js/luck-app.js` | the luck page: start screen, league picker, the table |
 | `js/cache-idb.js` · `js/cache-fs.js` | the response cache, one per environment |
 | `data/historical/<year>/grades.json` | canonical researched grades, one file per season |
 | `bin/board.mjs` | the board on the command line |
+| `bin/lineup.mjs` | building and checking the weekly bundles, start/sit on the terminal, the backtest |
+| `bin/lib/nfl.mjs` | the two free sources behind the bundle |
+| `bin/lib/bundle.mjs` | what a bundle must look like before it is published |
+| `data/lineup/` | generated, not committed: each offered week's projections and the index naming them |
 | `bin/grades.mjs` | offline grade validation and research queue |
 | `bin/fixture.mjs` | freezing today's pool as the test fixture |
 | `scripts/start.mjs` | the local static server behind `npm start` |
@@ -206,6 +221,141 @@ That id is the one thing about a mock nothing else can tell us, so the browser
 remembers it against the league it was pasted in from and re-fetches it on the
 next visit. A mock that has since been deleted is dropped from the picker rather
 than breaking it.
+
+## Setting a lineup
+
+`lineup.html` is the page for a Sunday morning. One username, the same
+leagues, and for the league and week you pick: every player on your roster
+projected, the best legal lineup off that roster, and the changes
+between it and whatever Sleeper currently has saved, each with how many
+points it is worth.
+
+Nothing on it is a provider's projection. The board prices players off
+Rotowire's season line because a draft has no season to build one from; a
+lineup in week 10 has nine weeks of evidence sitting right there, and a
+start/sit call turns on exactly the things a season projection has already
+averaged away — who is getting the snaps *now*, who the defence is, and
+whether the game is a shootout or a grind.
+
+```
+points = team volume × player opportunity × efficiency × matchup
+```
+
+Each row opens onto those four. A total can tell you a receiver is worth nine
+points; the decomposition can tell you it is because his snap share halved.
+[docs/lineup-model.md](docs/lineup-model.md) is the derivation, the backtest
+and the ablations.
+
+### Why this one page has a build step
+
+Every other number on this site is computed in the browser from what Sleeper
+answers. This one cannot be: it needs every completed week of player stats —
+snaps, targets, red-zone looks, nine megabytes — joined against a schedule
+with spreads and totals on it, from a second provider. That is not a thing to
+do in a browser on a phone.
+
+So it is done ahead of time, by the deploy. Every push to `main` and every
+morning at 4am Eastern, the Pages workflow builds the projections, checks
+them, and publishes them with the site. Nothing generated is committed. To get
+a local copy:
+
+```bash
+npm run lineup                      # build the offered weeks into data/lineup/
+node bin/lineup.mjs check           # what the deploy checks before publishing
+node bin/lineup.mjs build --week 11 # or one particular week
+```
+
+**Only weeks with betting lines are offered**, because the implied total is
+what every projection hangs off. That is the week a lineup is being set for
+once the books have priced it, plus — on a Monday — the week still being
+played, with everyone whose game has kicked off locked where Sleeper has them.
+Before the coming week's lines are up, the page says so rather than guessing.
+
+**Every finished week is offered too**, from week 2, to look back at projected
+against actual. Each is built only from the weeks before it — the backtest's
+no-lookahead rule — so it is the projection the page would have shown at the
+time. Sleeper keeps no history of injury tags, so a finished week is tagged by
+who actually played (`tagByAttendance` in `js/project.js`): anyone who did not
+is Out. The page shows the lineup you had that week (from the league's
+matchups), its projected and actual points with the actual marked on each
+range, and what the projected best lineup would actually have scored.
+
+**What is published is rates, not projections.** Everything that takes nine
+weeks of stats to work out — each player's share, efficiency and matchup, each
+team's volume off the line — is in the file. The last step is not: who plays,
+and where an absent player's targets, carries and touchdowns go. That depends
+on injury news, which moves by the hour, so the page does it. It downloads the
+week's file (about three quarters of a megabyte) and asks Sleeper for a handful of
+small things: who you are, your leagues, their rosters, the week's matchups
+for actual points, and the week's projections feed. That last one carries every player's live injury
+tag, and the page finishes the projections against those tags with
+`finalizeWeek` in `js/project.js` — the same function the command line,
+the backtest and the publishing check run, so there is one model, not two.
+
+**A dropdown picks the projection: Simulated or Sleeper's.** Simulated is
+this model. Sleeper's comes from the same feed — Sleeper's projected stat line
+for every player, scored under the league's settings exactly as ours is — and
+the whole card runs on whichever is picked: the best lineup, the changes, the
+totals. Sleeper's is one number per player, so it has no range. If Sleeper's
+feed does not answer, the page falls back to the build's injury tags and says
+so.
+
+**Actual points sit beside the projection** for anyone whose game has kicked
+off, from the league's own matchups (so already under its scoring). From
+kickoff a player is locked, as he is in Sleeper, and the page will not
+suggest moving him.
+
+**A build that fails its check is not published.** `bin/lib/bundle.mjs` holds
+each bundle to ranges a real week sits well inside — a line on every game,
+every team's targets adding up to its dropbacks, the average defence and
+kicker projecting like a defence and a kicker — and the workflow stops if any
+is out. The site then keeps serving the last build that passed, which is a
+day-old lineup rather than a wrong one. The offseason is not a failure: the
+build writes an index that says why there is nothing to show, and the page
+prints it.
+
+The two sources are both free and need no key:
+
+| | |
+|---|---|
+| `api.sleeper.app/stats/nfl/<season>/<week>` | one request per week, carrying the player, his position, the team he played for *that* week, who he played, and a stat line with snaps and red-zone looks on it |
+| `nflverse/nfldata/.../games.csv` | the schedule with spreads and totals, including for games not yet played |
+
+The Sleeper url is a different endpoint from the `/v1/stats/...` one in the
+docs, which answers with a bare map keyed by player id and no team on it. The
+team per week is what makes a traded player and a defensive matchup both work,
+so it is worth the undocumented url.
+
+### On the command line
+
+```bash
+node bin/lineup.mjs show "Puka Nacua" "Jaxon Smith-Njigba"   # start which?
+node bin/lineup.mjs show --user taylars --start              # the whole lineup
+npm run lineup:backtest                                      # how wrong is it?
+node bin/lineup.mjs backtest --from 4 --no-matchup           # does a layer help?
+```
+
+`show` prints the component breakdown under each player, because "nine points"
+is not an argument and "his snap share went from 82% to 46%" is. Two names
+also get the head-to-head: how often one outscores the other over the same
+simulated weeks.
+
+### How good is it
+
+`backtest` projects each completed week from the weeks before it and nothing
+else — the bundle is rebuilt per week, which is slow and is the point, since
+any shortcut leaks the answer — then scores it against what players actually
+scored, with Sleeper's own weekly projection for the same rows alongside.
+
+Over 2026 weeks 4–9, on startable players, mean absolute error in half PPR:
+**5.13 against Sleeper's 4.91**. Better than Sleeper at quarterback (5.77 to
+5.81), within a quarter of a point at every other position, about four tenths
+behind overall. A provider with paid data and a staff being slightly better at
+this is the expected result; the reason to run this anyway is that you can see
+what it is made of and argue with it.
+
+The tables, the per-layer ablations, and what is known to be wrong with it are
+in [docs/lineup-model.md](docs/lineup-model.md).
 
 ## The luck table
 
@@ -419,8 +569,24 @@ shortlist so a failure says what it got instead. Planted players are built by
 that is how "just better than the best man on the board" gets written without
 restating his whole line.
 
-`test/luck.test.js` is the exception to all of this, because the luck metric
-is arithmetic rather than a judgment: it runs on a four-team, two-week league
+`test/lineup.test.js` and `test/luck.test.js` are the exceptions to all of
+this, because both are arithmetic rather than a judgment. A lineup is either
+the best legal one off a roster or it isn't, and "isn't" is a wrong answer
+rather than a differently-tuned one — so the numbers there are pinned. The
+claim worth the most is that the slot search is exact: filling the narrow
+slots first with the best eligible player is the obvious way to do it and it
+is wrong, on a roster shape most leagues don't have, which is exactly the kind
+of bug that ships. It also pins the Monday case: a player whose game is over
+is never moved in or out. `test/project.test.js` runs the model over a two-team,
+three-week season small enough to work out on paper, and pins one thing
+exactly — that `td` on a defensive row is touchdowns *allowed*. Reading it as
+a defensive score put fourteen points a week on every defence in the league,
+and it looked like a plausible number all the way to the lineup it ruined.
+`test/bundle.test.js` breaks a healthy bundle one way at a time — no line, a
+defence scoring like that, a team short of its targets — and holds the
+publishing check to catching each.
+
+The luck suite runs on a four-team, two-week league
 small enough that every expected win, schedule-luck total and luck score in
 the file was worked out on paper first. Pinning those numbers down is the
 point. It also holds the one case that actually bit — a week in progress, where
@@ -444,6 +610,12 @@ Two things this depends on, both easy to break later:
   `/data/historical/index.json` would 404.
 - **`.nojekyll` must stay.** Without it Pages runs Jekyll, which silently drops
   files and directories beginning with `_`.
+
+- **`data/lineup/` is built by the deploy, not committed.** The workflow
+  runs on every push and every morning at 4am Eastern (two UTC crons, one
+  per side of daylight saving, with a job that lets through the right one).
+  GitHub turns scheduled workflows off after sixty days without a commit, so
+  after a quiet offseason it may need switching back on under Actions.
 
 - **Script and stylesheet URLs are stamped at deploy.** Pages caches every
   file for ten minutes, each on its own clock, so straight after a deploy a

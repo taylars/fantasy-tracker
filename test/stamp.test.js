@@ -57,6 +57,15 @@ test("the pages and modules that reach each other are all stamped", async () => 
     assert.match(app, /from "\.\/luck\.js\?v=abc123"/);
     assert.match(app, /from "\.\/sleeper\.js\?v=abc123"/);
 
+    const lineup = await readFile(path.join(dir, "lineup.html"), "utf8");
+    assert.match(lineup, /src="js\/lineup-app\.js\?v=abc123"/);
+    const setting = await readFile(path.join(dir, "js", "lineup-app.js"), "utf8");
+    assert.match(setting, /from "\.\/lineup\.js\?v=abc123"/);
+    // js/lineup.js reaches js/project.js, which no page loads directly — the
+    // chain is the thing that has to be stamped, not just the entry point.
+    const model = await readFile(path.join(dir, "js", "lineup.js"), "utf8");
+    assert.match(model, /from "\.\/project\.js\?v=abc123"/);
+
     // The board's worker is reached through new URL(), not an import.
     const board = await readFile(path.join(dir, "js", "app.js"), "utf8");
     assert.match(board, /new URL\("\.\/worker\.js\?v=abc123", import\.meta\.url\)/);

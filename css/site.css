@@ -36,7 +36,16 @@
    the two pages this is without either page having to. */
 .site-links a[aria-current="page"]{opacity:1;border-bottom-color:var(--tape);}
 
-@media (max-width:420px){
-  .site-name{font-size:17px;}
-  .site-links a{padding:0 7px;font-size:10.5px;letter-spacing:.08em;}
+/* Three links now, not two, and the bar has to hold them on a 360px phone
+   beside the site's name. It wraps rather than scrolls if it ever can't:
+   a header that clips its own last link is worse than a header two lines
+   tall. */
+@media (max-width:520px){
+  .site-in{flex-wrap:wrap;gap:6px;}
+  .site-name{font-size:16px;}
+  .site-links a{padding:0 6px;font-size:10px;letter-spacing:.05em;}
+}
+@media (max-width:360px){
+  .site-name{font-size:15px;}
+  .site-links a{padding:0 4px;letter-spacing:.02em;}
 }

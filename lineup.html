@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Set Lineup · Fantasy Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="css/site.css" rel="stylesheet">
+<style>
+  /* The same pinboard as the other two pages, showing a third thing. The one
+     colour decision specific to this page: green means a lineup is already
+     right and amber-on-ink means there is something to do. A change you have
+     not made yet is the only thing on the page that is urgent, so it is the
+     only thing wearing the tape. */
+  :root{
+    --board:#D9DDD6;
+    --board-dark:#C6CBC2;
+    --sticker:#FFFFFF;
+    --ink:#16191A;
+    --ink-soft:#5C625E;
+    --tape:#F2C230;
+    --win:#157F52;
+    --loss:#C2255C;
+    --display:"Barlow Condensed",Impact,sans-serif;
+    --body:"Archivo",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--board);
+    background-image:
+      linear-gradient(rgba(0,0,0,.035) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(0,0,0,.035) 1px,transparent 1px);
+    background-size:34px 34px;
+    color:var(--ink);
+    font-family:var(--body);
+    font-size:15px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:860px;margin:0 auto;padding:22px 16px 80px;}
+
+  /* ---------- masthead ---------- */
+  .mast{border-bottom:3px solid var(--ink);padding-bottom:14px;margin-bottom:18px;}
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink-soft);margin:0 0 6px;
+  }
+  h1{
+    font-family:var(--display);font-weight:700;
+    font-size:clamp(38px,9vw,64px);line-height:.92;
+    letter-spacing:-.01em;text-transform:uppercase;margin:0;
+  }
+  h1 em{
+    font-style:normal;background:var(--tape);padding:0 .18em;
+    box-decoration-break:clone;-webkit-box-decoration-break:clone;
+  }
+  .sub{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin:10px 0 0;}
+  .whoami{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-soft);margin:8px 0 0;
+  }
+  .whoami b{
+    color:var(--ink);font-weight:600;letter-spacing:.04em;
+    text-transform:none;font-family:var(--body);font-size:13px;
+  }
+  .switch-user{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+    background:none;border:0;padding:2px 0;margin:0;cursor:pointer;
+    color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;
+  }
+  .switch-user:hover{color:var(--loss);}
+  .switch-user:focus-visible{outline:2px solid var(--loss);outline-offset:2px;}
+
+  /* ---------- the league picker ---------- */
+  .picker{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 18px;}
+  .field{display:flex;flex-direction:column;gap:6px;flex:1 1 250px;min-width:0;}
+  .field-week{flex:0 1 240px;}
+  .field-lbl{
+    font-family:var(--mono);font-size:10.5px;font-weight:600;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);
+  }
+  .field select{
+    appearance:none;-webkit-appearance:none;
+    font-family:var(--display);font-weight:600;
+    font-size:18px;line-height:1.15;letter-spacing:.02em;
+    text-transform:uppercase;color:var(--ink);
+    background-color:var(--sticker);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' fill='none' stroke='%2316191A' stroke-width='2'/%3E%3C/svg%3E");
+    background-repeat:no-repeat;background-position:right 11px center;background-size:11px 7px;
+    border:2px solid var(--ink);border-radius:2px;box-shadow:3px 3px 0 var(--ink);
+    padding:8px 34px 7px 10px;width:100%;cursor:pointer;text-overflow:ellipsis;
+  }
+  .field select:hover{background-color:#FFFBEC;}
+  .field select:focus-visible{outline:3px solid var(--loss);outline-offset:2px;}
+  .field select:disabled{
+    color:var(--ink-soft);background-color:transparent;
+    border-color:var(--board-dark);box-shadow:none;cursor:default;background-image:none;
+  }
+  .field option{font-family:var(--body);font-size:14px;text-transform:none;}
+
+  .standing{
+    font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);
+    letter-spacing:.04em;margin:0 0 14px;min-height:1.4em;
+  }
+  .standing b{color:var(--ink);font-weight:600;}
+  .status{
+    font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);
+    padding:20px 0;margin:0;
+  }
+  .status-note{
+    font-family:var(--mono);font-size:11px;color:var(--ink-soft);
+    margin:0 0 10px;min-height:1.2em;
+  }
+
+  /* ---------- the verdict ---------- */
+  /* The answer to the question the page was opened to ask, before any table.
+     A lineup that is already right needs a sentence and nothing else; one
+     that isn't needs to say so loudly enough that it isn't scrolled past. */
+  .verdict{
+    font-family:var(--mono);font-size:13px;line-height:1.6;
+    border:2px solid var(--ink);border-left-width:8px;
+    background:var(--sticker);padding:11px 13px;margin:0 0 20px;
+  }
+  .verdict b{font-weight:600;}
+  .verdict.ok{border-left-color:var(--win);}
+  .verdict.act{border-left-color:var(--tape);background:#FFFBEC;}
+  .verdict.none{border-left-color:var(--ink-soft);}
+
+  /* ---------- sections ---------- */
+  .block{margin:0 0 26px;}
+  .block h2{
+    font-family:var(--display);font-weight:700;font-size:21px;
+    letter-spacing:.02em;text-transform:uppercase;
+    margin:0 0 8px;padding-bottom:4px;border-bottom:2px solid var(--ink);
+  }
+  .block-note{
+    font-family:var(--mono);font-size:11px;line-height:1.6;
+    color:var(--ink-soft);margin:0 0 10px;max-width:72ch;
+  }
+
+  /* ---------- the moves list ---------- */
+  .mvs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;}
+  .mv{
+    display:grid;align-items:baseline;column-gap:10px;
+    grid-template-columns:62px minmax(0,1fr) 54px;
+    grid-template-areas:"slot what gain" ". odds odds";
+    background:var(--sticker);border:2px solid var(--ink);
+    padding:7px 10px;
+    font-family:var(--mono);font-size:12px;
+  }
+  .mv-slot{
+    grid-area:slot;font-size:10px;font-weight:600;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-soft);
+  }
+  .mv-what{grid-area:what;font-family:var(--body);font-size:14px;line-height:1.35;}
+  .mv-what b{font-weight:600;}
+  .mv-gain{
+    grid-area:gain;text-align:right;font-weight:600;font-size:14px;
+    font-variant-numeric:tabular-nums;color:var(--win);
+  }
+  .mv-gain.thin{color:var(--ink-soft);}
+  .mv-act{grid-column:2 / 4;font-size:10.5px;letter-spacing:.02em;}
+  .mv-act.up{color:var(--win);}
+  .mv-act.down{color:var(--loss);}
+  .mv-odds{grid-area:odds;font-size:10.5px;color:var(--ink-soft);letter-spacing:.02em;}
+
+  /* ---------- the lineup table ---------- */
+  /* Fixed layout, same reason as the luck table: the name column has to be
+     the one that gives way, or a long team name pushes the points off a
+     phone. */
+  .tbl{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0 4px;}
+  .tbl thead th{
+    font-family:var(--mono);font-size:10px;font-weight:600;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);
+    text-align:left;padding:0 8px 6px;white-space:nowrap;
+  }
+  .tbl thead th[title]{cursor:help;}
+  .tbl thead th.c-pts{text-align:right;}
+  tbody.pl{background:var(--sticker);border:2px solid var(--ink);}
+  .pl-row{cursor:pointer;}
+  .pl-row>td{
+    border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);
+    background:var(--sticker);padding:7px 8px;vertical-align:middle;
+  }
+  .pl-row>td:first-child{border-left:2px solid var(--ink);}
+  .pl-row>td:last-child{border-right:2px solid var(--ink);}
+  .pl-row:hover>td{background:#FFFBEC;}
+  .pl-row:focus-visible{outline:3px solid var(--loss);outline-offset:2px;}
+  tbody.pl.empty .pl-row{cursor:default;}
+  tbody.pl.empty .pl-row>td{color:var(--ink-soft);}
+
+  .c-slot{
+    width:62px;
+    font-family:var(--display);font-weight:700;font-size:15px;
+    letter-spacing:.04em;text-transform:uppercase;
+  }
+  .c-who{min-width:0;}
+  .pl-name{
+    display:block;font-weight:600;font-size:14px;line-height:1.25;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .pl-meta{
+    display:block;font-family:var(--mono);font-size:10px;
+    letter-spacing:.03em;color:var(--ink-soft);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .pl-meta b{color:var(--loss);font-weight:600;text-transform:uppercase;letter-spacing:.08em;}
+
+  /* The range bar. One scale for the whole page, so two rows are read against
+     each other — which is the only comparison a start/sit call cares about.
+     The span is the 20th to 80th percentile and the tick is the median. */
+  .c-range{width:180px;}
+  .rng{
+    display:block;position:relative;height:12px;width:100%;
+    background:var(--board);border:1.5px solid var(--board-dark);border-radius:2px;
+  }
+  .rng-span{
+    position:absolute;top:0;bottom:0;
+    background:var(--ink-soft);opacity:.45;border-radius:2px;
+  }
+  .rng-act{
+    position:absolute;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;
+    border-radius:50%;background:var(--ink);border:2px solid var(--sticker);
+    box-shadow:0 0 0 1px var(--ink);
+  }
+  .rng-act.above{background:var(--win);box-shadow:0 0 0 1px var(--win);}
+  .rng-act.below{background:var(--loss);box-shadow:0 0 0 1px var(--loss);}
+  .rng-mid{
+    position:absolute;top:-2px;bottom:-2px;width:3px;margin-left:-1.5px;
+    background:var(--ink);border-radius:1px;
+  }
+
+  .c-pts{
+    width:62px;text-align:right;
+    font-family:var(--mono);font-size:15px;font-weight:600;
+    font-variant-numeric:tabular-nums;
+  }
+  .c-act{
+    width:56px;text-align:right;
+    font-family:var(--mono);font-size:15px;font-weight:600;
+    font-variant-numeric:tabular-nums;color:var(--ink);
+  }
+  .c-act .above{color:var(--win);}
+  .c-act .below{color:var(--loss);}
+  .tbl thead th.c-act{text-align:right;}
+  .c-pts-rng{
+    display:block;font-size:9.5px;font-weight:500;
+    letter-spacing:.02em;color:var(--ink-soft);
+  }
+
+  /* ---------- chips ---------- */
+  .chip{
+    display:inline-block;margin-left:6px;vertical-align:1px;
+    font-family:var(--display);font-weight:700;font-size:10px;
+    letter-spacing:.08em;text-transform:uppercase;
+    padding:1px 5px;border-radius:2px;color:#fff;
+  }
+  .chip.bye{background:var(--ink-soft);}
+  .chip.out{background:var(--loss);}
+  .chip.doubt{background:#B3561B;}
+  .chip.quest{background:var(--ink-soft);}
+  .chip.unknown{background:var(--board-dark);color:var(--ink);}
+
+  /* ---------- the breakdown ---------- */
+  tr.detail>td{padding:0;border:0;}
+  tbody.pl:not(.open) tr.detail{display:none;}
+  .detail-in{
+    background:#FFFBEC;border:2px solid var(--ink);border-top:0;
+    padding:10px 12px 11px;
+  }
+  .bd{list-style:none;margin:0;padding:0;}
+  .bd li{
+    display:grid;column-gap:10px;
+    grid-template-columns:132px minmax(0,1fr);
+    grid-template-areas:"k v" ". n";
+    font-family:var(--mono);font-size:11.5px;
+    border-top:1px solid var(--board-dark);padding:4px 0 3px;
+  }
+  .bd li:first-child{border-top:0;}
+  .bd-k{
+    grid-area:k;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--ink-soft);padding-top:1px;
+  }
+  .bd-v{grid-area:v;font-weight:600;font-variant-numeric:tabular-nums;}
+  .bd-n{grid-area:n;font-size:10px;color:var(--ink-soft);}
+  .bd-line{
+    font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);
+    margin:8px 0 0;word-spacing:.15em;
+  }
+  .bd-games{font-family:var(--mono);font-size:10px;color:var(--ink-soft);margin:5px 0 0;}
+  .bd-none{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);margin:0;}
+
+  /* ---------- footnotes and legend ---------- */
+  .foot,.legend{
+    font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--ink-soft);
+    border-top:2px solid var(--ink);padding-top:12px;margin-top:28px;
+  }
+  .foot p,.legend p{margin:0 0 8px;max-width:72ch;}
+  .foot p:last-child,.legend p:last-child{margin-bottom:0;}
+  .foot b,.legend b{color:var(--ink);font-weight:600;}
+  .foot code,.legend code,.start-error code{
+    font-family:var(--mono);font-size:10.5px;
+    background:var(--sticker);border:1px solid var(--board-dark);
+    border-radius:2px;padding:0 3px;
+  }
+
+  @media (max-width:560px){
+    .field{flex:1 1 100%;}
+    /* The range bar goes on a phone. It exists to compare two rows at a
+       glance and there is no room for it beside a name and a number; the
+       percentiles are still under the points, in words. */
+    .tbl thead th.c-range,.pl-row>td.c-range{width:0;padding:0;overflow:hidden;font-size:0;}
+    .c-slot{width:50px;font-size:13px;padding-left:5px;padding-right:2px;}
+    .c-pts{width:58px;font-size:15px;}
+    .c-act{width:50px;font-size:14px;padding-left:2px;}
+    .pl-meta{white-space:normal;}
+    .mv{grid-template-columns:52px minmax(0,1fr) 48px;}
+    .bd li{grid-template-columns:100px minmax(0,1fr);}
+    .bd-k{font-size:9.5px;letter-spacing:.04em;}
+  }
+
+  /* ---------- the start screen ---------- */
+  .start{max-width:520px;margin:0 auto;padding:64px 16px 80px;}
+  .start h1{margin-bottom:6px;}
+  .start .sub{margin-bottom:26px;max-width:46ch;}
+  .start-form{display:flex;gap:8px;flex-wrap:wrap;}
+  .start-form label{flex:1 1 220px;display:flex;flex-direction:column;gap:5px;min-width:0;}
+  #username{
+    font-family:var(--mono);font-size:16px;
+    background:var(--sticker);color:var(--ink);
+    border:2px solid var(--ink);box-shadow:2px 2px 0 var(--ink);
+    border-radius:2px;padding:11px 12px;width:100%;
+  }
+  #username:focus-visible{outline:3px solid var(--loss);outline-offset:2px;}
+  #username:disabled{opacity:.6;}
+  .start-go{
+    font-family:var(--display);font-weight:700;font-size:19px;
+    letter-spacing:.04em;text-transform:uppercase;
+    background:var(--ink);color:#fff;
+    border:2px solid var(--ink);box-shadow:2px 2px 0 var(--tape);
+    border-radius:2px;padding:0 20px;cursor:pointer;align-self:flex-end;height:47px;
+  }
+  .start-go:hover{background:#2C3133;}
+  .start-go:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--tape);}
+  .start-go:focus-visible{outline:3px solid var(--loss);outline-offset:2px;}
+  .start-go[disabled]{opacity:.5;cursor:default;transform:none;}
+  .start-note{
+    font-family:var(--mono);font-size:12px;color:var(--ink-soft);
+    margin:14px 0 0;min-height:1.4em;
+  }
+  .start-error{
+    font-family:var(--mono);font-size:12.5px;line-height:1.6;
+    border:2px solid var(--ink);border-left:8px solid var(--loss);
+    background:var(--sticker);padding:11px 13px;margin:18px 0 0;
+  }
+  .start-error[hidden]{display:none;}
+  .start-foot{
+    font-family:var(--mono);font-size:11px;color:var(--ink-soft);
+    border-top:2px solid var(--ink);padding-top:12px;margin-top:34px;
+    display:flex;flex-wrap:wrap;gap:14px;
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <nav class="site-in" aria-label="Fantasy Tracker">
+    <a class="site-name" href="index.html" data-nav>Fantasy Tracker</a>
+    <span class="site-links">
+      <a href="index.html" data-nav>Draft board</a>
+      <a href="lineup.html" data-nav aria-current="page">Set lineup</a>
+      <a href="luck.html" data-nav>Luck table</a>
+    </span>
+  </nav>
+</header>
+
+<!-- One field, same as the other two: the leagues and the rosters all follow
+     from a username. The projections come from the file in the repository. -->
+<section class="start" id="start" hidden>
+  <h1>Set <em>lineup</em></h1>
+  <p class="sub">Type your Sleeper username. Your roster comes from there; the
+    projections are built from nine weeks of play and this week's betting
+    lines, and they are not anyone else's.</p>
+
+  <form class="start-form" id="start-form" autocomplete="off">
+    <label>
+      <span class="field-lbl">Sleeper username</span>
+      <input type="text" id="username" name="username" required
+             autocapitalize="none" autocorrect="off" spellcheck="false"
+             placeholder="username">
+    </label>
+    <button type="submit" class="start-go" id="start-go">Go</button>
+  </form>
+
+  <p class="start-note" id="start-note"></p>
+  <p class="start-error" id="start-error" role="alert" hidden></p>
+
+  <div class="start-foot">
+    <span>Reads Sleeper directly — nothing is sent anywhere else</span>
+    <span>Nothing to sign in to; the username is public</span>
+  </div>
+</section>
+
+<div class="wrap" id="app" hidden>
+
+  <header class="mast">
+    <p class="eyebrow"><span id="season"></span> season · week <span id="week"></span></p>
+    <h1>Set <em>lineup</em></h1>
+    <p class="sub">The best legal lineup off your roster, and what it would take
+      to get there. Click a player for where his number comes from.</p>
+    <p class="whoami">Showing <b id="who"></b>
+      <button type="button" class="switch-user" id="switch-user">not you?</button></p>
+  </header>
+
+  <div class="picker">
+    <label class="field">
+      <span class="field-lbl">League</span>
+      <select id="league-pick"></select>
+    </label>
+    <label class="field field-week">
+      <span class="field-lbl">Week</span>
+      <select id="week-pick"></select>
+    </label>
+    <label class="field field-week">
+      <span class="field-lbl">Projection</span>
+      <select id="proj-pick">
+        <option value="ours">Simulated</option>
+        <option value="sleeper">Sleeper's</option>
+      </select>
+    </label>
+  </div>
+
+  <p class="status-note" id="status-note"></p>
+  <p class="standing" id="standing"></p>
+
+  <main id="card">
+    <p class="status">Reading your roster…</p>
+  </main>
+
+  <div class="legend">
+    <p><b>Proj</b> is the points a player is expected to score this week,
+      under your league's scoring. The small numbers under it, and the bar,
+      are his likely range: a bad week to a good one.</p>
+    <p><b>Actual</b> fills in once his game kicks off — what he has scored so
+      far, straight from your league — and the dot on his bar marks it:
+      green above his range, red below it, dark inside it. From kickoff he is
+      <code>locked</code>, as he is in Sleeper, and the page will not suggest
+      moving him.</p>
+    <p><b>Past weeks</b> are in the week picker. Each shows the lineup you
+      had, what it was projected to score — using only the weeks before it —
+      and what it actually scored, plus what the projected best lineup would
+      have scored instead.</p>
+    <p><b>Projection</b> picks whose numbers the page runs on.
+      <b>Simulated</b> is built here from this season's play — snaps, targets,
+      red-zone looks — and the week's betting lines, then played out four
+      thousand times to get the range; click a player to see how his number
+      is put together. <b>Sleeper's</b> is Sleeper's own weekly projection, a
+      single number with no range. Either way, the best lineup and the
+      changes come from the one you pick.</p>
+    <p><b>Too close to matter</b> lists starters less than 1.5 points ahead of
+      the best player on your bench who could take the spot. Either is a fine
+      start. On the Simulated projection each change and close call also says
+      how often one player outscores the other — near 50% is a coin flip.</p>
+    <p><b>Injuries are live from Sleeper.</b> <code>OUT</code>, <code>IR</code>,
+      <code>PUP</code> and <code>SUSP</code> project at zero; <code>D</code>
+      (doubtful) usually does not play, which pulls his range down;
+      <code>Q</code> is not discounted, because most questionable players
+      play. When someone is out, his share of the targets and carries goes to
+      his team-mates.</p>
+    <p><b>Weeks</b> are the ones with betting lines: the coming week once it
+      has them, and on a Monday the week still being played.</p>
+  </div>
+</div>
+
+<script type="module" src="js/nav.js"></script>
+<script type="module" src="js/lineup-app.js"></script>
+</body>
+</html>

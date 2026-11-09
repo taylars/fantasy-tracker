@@ -255,6 +255,48 @@ export class SleeperClient {
     );
   }
 
+  /* The week as Sleeper sees it right now → {at, tags, projections}.
+   *
+   * One request to the weekly projections feed: about a quarter of a megabyte
+   * compressed for every QB, RB, WR, TE, kicker and defence. `tags` is each player's
+   * live `injury_status` (the same as the fourteen-megabyte player file has),
+   * as Map(player_id → tag or null). `projections` is Sleeper's own projected
+   * stat line for each player it projects, as Map(player_id → stats), with its
+   * pre-scored `pts_*` totals and ADP fields dropped — a line is scored here,
+   * under the league's own settings, the same as ours.
+   *
+   * Kept five minutes, because the reason to ask at all is that injury tags
+   * change on a Sunday morning.
+   */
+  async getWeekReport(season, week, { sport = "nfl", seasonType = "regular",
+                                       positions = ["QB", "RB", "WR", "TE", "K", "DEF"],
+                                       ttlMs = 5 * 60 * 1000 } = {}) {
+    const url = new URL(`${PROJECTIONS_URL}/${sport}/${season}/${week}`);
+    url.searchParams.set("season_type", seasonType);
+    for (const position of positions) url.searchParams.append("position[]", position);
+
+    const report = await this.cached(`week-report:${sport}:${season}:${week}:${positions.join(",")}`, ttlMs, async () => {
+      const rows = await this.request(url.toString());
+      if (!Array.isArray(rows)) return null;
+      const projections = {};
+      for (const row of rows) {
+        const stats = Object.entries(row.stats ?? {})
+          .filter(([key, value]) => typeof value === "number" && value !== 0 && !/^(?:adp_|pos_adp_|rank_|pts_)/.test(key));
+        if (stats.length > 1) projections[row.player_id] = Object.fromEntries(stats);
+      }
+      return {
+        at: new Date().toISOString(),
+        tags: Object.fromEntries(rows.map((row) => [row.player_id, row.player?.injury_status ?? null])),
+        projections,
+      };
+    });
+    return report ? {
+      at: report.at,
+      tags: new Map(Object.entries(report.tags)),
+      projections: new Map(Object.entries(report.projections)),
+    } : null;
+  }
+
   /* Every player Sleeper knows, keyed by player_id. Fourteen megabytes.
    *
    * The board never calls this, and that is the whole design: the projections

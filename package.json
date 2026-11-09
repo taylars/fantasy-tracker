@@ -9,6 +9,8 @@
     "start": "node scripts/start.mjs",
     "board": "node bin/board.mjs",
     "backtest": "node bin/backtest.mjs",
+    "lineup": "node bin/lineup.mjs build",
+    "lineup:backtest": "node bin/lineup.mjs backtest --from 4",
     "historical:draft": "node bin/historical-draft.mjs",
     "historical:week": "node bin/historical-week.mjs",
     "fixture": "node bin/fixture.mjs",

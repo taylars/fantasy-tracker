@@ -1,8 +1,10 @@
 # Publish the board to GitHub Pages.
 #
-# There is no build step: the board is plain ES modules with no dependencies, so
-# what gets uploaded is the repository as it stands. That is deliberate — a
-# bundler here would mean the thing that ships is not the thing you ran locally.
+# There is no code build step: the board is plain ES modules with no
+# dependencies, so what gets uploaded is the repository as it stands. That is
+# deliberate — a bundler here would mean the thing that ships is not the thing
+# you ran locally. The one generated thing is data: the lineup page's weekly
+# projections, built fresh on every deploy and every morning, never committed.
 #
 # The one exception is a query string. Pages caches each file for ten minutes
 # on its own clock, so a browser can hold one deploy's page with the previous
@@ -17,6 +19,13 @@ on:
     branches: [main]
   # So a broken deploy can be re-run without an empty commit.
   workflow_dispatch:
+  # Every morning at 4am Eastern, so the lineup page has last night's injury
+  # news and the lines as they stand. Cron is UTC only and 4am Eastern is 08:00
+  # UTC in summer and 09:00 in winter, so both are scheduled and the `when` job
+  # below lets through only the one that matches New York's offset that day.
+  schedule:
+    - cron: "0 8 * * *"
+    - cron: "0 9 * * *"
 
 permissions:
   contents: read
@@ -30,7 +39,29 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Decides whether this run deploys. Pushes and manual runs always do; a
+  # scheduled run only if its cron is the 4am one for the season New York is
+  # in. Read off the cron that fired rather than the clock, because GitHub can
+  # start a scheduled run most of an hour late.
+  when:
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.when.outputs.go }}
+    steps:
+      - id: when
+        env:
+          CRON: ${{ github.event.schedule }}
+        run: |
+          if [ -z "$CRON" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          case "$(TZ=America/New_York date +%z)" in
+            -0400) want="0 8 * * *" ;;
+            *)     want="0 9 * * *" ;;
+          esac
+          if [ "$CRON" = "$want" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; else echo "go=false" >> "$GITHUB_OUTPUT"; fi
+
   deploy:
+    needs: when
+    if: needs.when.outputs.go == 'true'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -52,6 +83,28 @@ jobs:
       # fails here rather than in a draft.
       - name: Test the recommendations
         run: npm test
+
+      # The lineup page's projections: built here rather than committed, from
+      # Sleeper and nflverse, for the week being played (if its Monday game is
+      # still to come) and the coming week once it has lines. Both sources
+      # are free and need no key. Three tries a minute apart, because either
+      # can have a bad minute; if all three fail the deploy does not go out
+      # and the site keeps the last one that did.
+      - name: Build the lineup projections
+        run: |
+          for attempt in 1 2 3; do
+            node bin/lineup.mjs build && exit 0
+            echo "::warning::lineup build attempt $attempt failed"
+            [ "$attempt" -lt 3 ] && sleep 60
+          done
+          exit 1
+
+      # Nobody looks at a nightly build before it ships, so this does: lines
+      # on every game, every team's targets adding up, defences and kickers
+      # projecting like defences and kickers. A failure here stops the deploy
+      # with every reason printed, and the site keeps yesterday's.
+      - name: Check the lineup projections
+        run: node bin/lineup.mjs check
 
       # After the tests, on the checkout being uploaded: the repository itself
       # is never stamped (test/stamp.test.js holds it to that).

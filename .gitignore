@@ -15,3 +15,7 @@ data/cache/
 # data/historical/<season>/grades.json — but it is left alone rather than deleted for anyone who
 # still has one on disk.
 data/*.db
+
+# The lineup page's projections. Built by the Pages workflow on every deploy
+# and every morning; `npm run lineup` makes a local copy.
+data/lineup/
